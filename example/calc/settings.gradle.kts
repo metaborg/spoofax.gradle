@@ -1,4 +1,4 @@
-rootProject.name = "spoofax.gradle"
+rootProject.name = "org.metaborg.lang.calc"
 
 pluginManagement {
   repositories {
