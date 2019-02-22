@@ -50,12 +50,7 @@ open class SpoofaxBuildTask @Inject constructor(
   fun addPardonedLanguage(languageName: String) {
     pardonedLanguages.add(languageName)
   }
-
-
-  @Input
-  fun getSpoofaxProject(): IProject {
-    return spoofaxProject
-  }
+  
 
   @Input
   fun getLanguageIds(): List<LanguageIdentifier> {
