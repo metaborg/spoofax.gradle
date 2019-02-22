@@ -12,6 +12,11 @@ metaborg {
   kotlinLanguageVersion = "1.2"
 }
 
+gitonium {
+  // Disable snapshot dependency checks for releases, until we release a new stable version of Spoofax Core.
+  checkSnapshotDependenciesInRelease = false
+}
+
 dependencies {
   implementation("org.metaborg:org.metaborg.spoofax.meta.core:2.6.0-SNAPSHOT")
   implementation("org.metaborg:org.metaborg.spt.core:2.6.0-SNAPSHOT")
