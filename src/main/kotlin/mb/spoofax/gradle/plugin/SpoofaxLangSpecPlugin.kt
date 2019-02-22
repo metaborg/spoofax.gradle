@@ -176,8 +176,8 @@ class SpoofaxLangSpecPlugin : Plugin<Project> {
       }
     }
     val langSpecCompileTask = project.tasks.register("spoofaxLangSpecCompile") {
-      // Task dependencies: loading languages and dialects, and generate-sources.
-      dependsOn(loadLanguagesTask, loadDialectsTask, langSpecGenSourcesTask)
+      // Task dependencies: loading languages and dialects, build, and generate-sources.
+      dependsOn(loadLanguagesTask, loadDialectsTask, buildTask, langSpecGenSourcesTask)
       // Inputs: any file in the project directory.
       inputs.dir(projectDir)
       // Outputs: any file in the project directory.
