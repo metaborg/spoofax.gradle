@@ -1,0 +1,31 @@
+---
+name: Calc
+pardonedLanguages:
+  - EditorService
+  - Stratego-Sugar
+  - SDF
+debug:
+  typesmart: false
+language:
+  sdf:
+    pretty-print: Calc
+    sdf2table: java
+    placeholder:
+      prefix: "$"
+  stratego:
+    format: jar
+    args:
+      - -la
+      - stratego-lib
+      - -la
+      - stratego-sglr
+      - -la
+      - stratego-gpp
+      - -la
+      - stratego-xtc
+      - -la
+      - stratego-aterm
+      - -la
+      - stratego-sdf
+      - -la
+      - strc
