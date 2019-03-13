@@ -18,6 +18,7 @@ spoofax {
   addSourceLanguageDep("org.metaborg", "org.metaborg.meta.nabl2.runtime", metaborgVersion)
 
   addSpoofaxCoreDep()
+  addSpoofaxRepos()
 
   dependencies {
     api("org.metaborg:org.metaborg.meta.lang.dynsem.interpreter:$metaborgVersion")
