@@ -13,7 +13,7 @@ metaborg {
 }
 
 gitonium {
-  // Disable snapshot dependency checks for releases, until we release a new stable version of Spoofax Core.
+  // Disable snapshot dependency checks for releases, until we depend on a stable version of Spoofax Core.
   checkSnapshotDependenciesInRelease = false
 }
 
