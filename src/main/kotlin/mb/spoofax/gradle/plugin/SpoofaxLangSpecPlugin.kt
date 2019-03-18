@@ -44,8 +44,11 @@ class SpoofaxLangSpecPlugin : Plugin<Project> {
     val extension = SpoofaxExtension(project)
     project.extensions.add("spoofax", extension)
 
-    val spoofax = Spoofax(SpoofaxGradleModule(), SpoofaxExtensionModule())
-    val spoofaxMeta = SpoofaxMeta(spoofax, SpoofaxGradleMetaModule())
+    // Use a null module plugin loader for Spoofax, as service loading does not work well in a Gradle environment.
+    val spoofaxModulePluginLoader = NullModulePluginLoader()
+    val spoofax = Spoofax(spoofaxModulePluginLoader, SpoofaxGradleModule(), SpoofaxExtensionModule())
+    spoofax.configureAsHeadlessApplication()
+    val spoofaxMeta = SpoofaxMeta(spoofax, spoofaxModulePluginLoader, SpoofaxGradleMetaModule())
     project.afterEvaluate { configure(this, extension, spoofax, spoofaxMeta) }
     project.gradle.buildFinished {
       spoofaxMeta.close()

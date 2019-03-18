@@ -1,7 +1,7 @@
 plugins {
   id("org.metaborg.gradle.config.root-project") version "0.3.3"
   id("org.metaborg.gitonium") version "0.1.0"
-  id("org.metaborg.spoofax.gradle.langspec") version "develop-SNAPSHOT"
+  id("org.metaborg.spoofax.gradle.langspec") // No version, use included build only.
   id("de.set.ecj") version "1.4.1" // Use ECJ to speed up compilation of Stratego's generated Java files.
 }
 
