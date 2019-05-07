@@ -1,7 +1,6 @@
 plugins {
-  id("org.metaborg.gradle.config.root-project") version "0.3.6"
-  id("org.metaborg.gradle.config.kotlin-gradle-plugin") version "0.3.6"
-  id("org.metaborg.gradle.config.junit-testing") version "0.3.6"
+  id("org.metaborg.gradle.config.root-project") version "0.3.7"
+  id("org.metaborg.gradle.config.kotlin-gradle-plugin") version "0.3.7"
   id("org.metaborg.gitonium") version "0.1.1"
   kotlin("jvm") version "1.3.21"
   `kotlin-dsl`
@@ -35,10 +34,4 @@ repositories {
   maven("https://pluto-build.github.io/mvnrepository/")
   maven("https://sugar-lang.github.io/mvnrepository/")
   maven("http://nexus.usethesource.io/content/repositories/public/")
-}
-
-tasks.withType<Test> {
-  useJUnitPlatform {
-    excludeTags.add("stackOverflowing")
-  }
 }
