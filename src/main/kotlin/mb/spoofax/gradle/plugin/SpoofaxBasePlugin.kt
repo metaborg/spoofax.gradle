@@ -2,6 +2,8 @@ package mb.spoofax.gradle.plugin
 
 import org.gradle.api.Plugin
 import org.gradle.api.Project
+import org.metaborg.core.MetaborgConstants
+import org.metaborg.spoofax.core.SpoofaxConstants
 
 open class SpoofaxBasePlugin : Plugin<Project> {
   companion object {
@@ -11,8 +13,8 @@ open class SpoofaxBasePlugin : Plugin<Project> {
 
     const val spoofaxLanguageExtension = "spoofax-language"
 
-    const val defaultMetaborgGroup = "org.metaborg"
-    const val defaultMetaborgVersion = "2.6.0-SNAPSHOT"
+    const val defaultMetaborgGroup = MetaborgConstants.METABORG_GROUP_ID
+    const val defaultMetaborgVersion = MetaborgConstants.METABORG_VERSION
   }
 
   override fun apply(project: Project) {
