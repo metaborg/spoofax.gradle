@@ -28,7 +28,7 @@ gradlePlugin {
 // Embed Spoofax Core dependencies into the plugin so that users do not receive the transitive dependency tree.
 val embedded: Configuration = configurations.create("embedded")
 configurations.getByName(JavaPlugin.COMPILE_ONLY_CONFIGURATION_NAME).extendsFrom(embedded)
-val spoofaxVersion = "2.5.6"
+val spoofaxVersion = "2.6.0-SNAPSHOT"
 dependencies {
   embedded("org.metaborg:org.metaborg.spoofax.meta.core:$spoofaxVersion")
   embedded("org.metaborg:org.metaborg.spt.core:$spoofaxVersion")
