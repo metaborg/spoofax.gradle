@@ -145,6 +145,9 @@ class SpoofaxLangSpecPlugin : Plugin<Project> {
     val targetMetaborgDir = targetDir.resolve("metaborg")
     val buildTask = project.tasks.registerSpoofaxBuildTask(spoofax, langSpecProject)
     buildTask.configure {
+      // Task dependencies:
+      // 1. Language dependencies configuration, which influences which languages are loaded.
+      dependsOn(languageConfig)
       if(extension.approximateDependencies) {
         // Inputs:
         // * `metaborg.yaml` config file
@@ -194,7 +197,7 @@ class SpoofaxLangSpecPlugin : Plugin<Project> {
     val metaborgComponentYaml = srcGenDir.resolve("metaborg.component.yaml")
     val langSpecGenSourcesTask = project.tasks.register("spoofaxLangSpecGenerateSources") {
       // Task dependencies:
-      // 1. Any task that contributes to the language configuration (languageConfig can influence dependencies in configuration, which in turn influences the src-gen/metaborg.component.yaml file.)
+      // 1. Language dependencies configuration, which can influence dependencies in configuration, which in turn influences the src-gen/metaborg.component.yaml file.
       dependsOn(languageConfig)
       // 2. Must run after build task, because there may be custom generateSources build steps which require files to be built.
       mustRunAfter(buildTask)
@@ -224,8 +227,13 @@ class SpoofaxLangSpecPlugin : Plugin<Project> {
       }
     }
     val langSpecCompileTask = project.tasks.register("spoofaxLangSpecCompile") {
-      // Task dependencies: build and generate-sources.
-      dependsOn(buildTask, langSpecGenSourcesTask)
+      // Task dependencies:
+      // 1. Language dependencies configuration, which influences which languages are loaded.
+      dependsOn(languageConfig)
+      // 2. Spoofax build task, which provides sources which are compiled by this task.
+      dependsOn(buildTask)
+      // 3. Generate sources task, which provides sources which are compiled by this task.
+      dependsOn(langSpecGenSourcesTask)
       if(extension.approximateDependencies) {
         // * SDF
         // - old build and Stratego concrete syntax extensions
@@ -277,7 +285,10 @@ class SpoofaxLangSpecPlugin : Plugin<Project> {
     val compileJavaTask = project.tasks.getByName(JavaPlugin.COMPILE_JAVA_TASK_NAME)
     compileJavaTask.dependsOn(langSpecCompileTask)
     val langSpecPackageTask = project.tasks.register("spoofaxLangSpecPackage") {
-      // Task dependencies: compile.
+      // Task dependencies:
+      // 1. Language dependencies configuration, which influences which languages are loaded.
+      dependsOn(languageConfig)
+      // 2. Compile task, which provides files that are packaged with this task.
       dependsOn(langSpecCompileTask)
       if(extension.approximateDependencies) {
         // Input: Stratego and Stratego Java strategies compiled class files.
@@ -314,7 +325,8 @@ class SpoofaxLangSpecPlugin : Plugin<Project> {
     val archiveLoc = langSpecPaths.spxArchiveFile(config.identifier().toFileString())
     val archiveFile = resourceSrv.localPath(archiveLoc)!!
     val langSpecArchiveTask = project.tasks.register("spoofaxLangSpecArchive") {
-      // Task dependencies: package.
+      // Task dependencies:
+      // 1. Package task, which provides files that are archived with this task.
       dependsOn(langSpecPackageTask)
       if(extension.approximateDependencies) {
         val iconsDir = projectDir.resolve("icons")
@@ -367,7 +379,8 @@ class SpoofaxLangSpecPlugin : Plugin<Project> {
     // Build examples tasks.
     val buildExamplesTask = project.tasks.registerSpoofaxBuildTask(spoofax, langSpecProject, "spoofaxBuildExamples")
     buildExamplesTask.configure {
-      // Task dependencies: archiving the compiled language.
+      // Task dependencies:
+      // 1. Archive task, which provides the archive of the compiled language specification which we are loading in this task.
       dependsOn(langSpecArchiveTask)
       // Inputs: any file in the project directory.
       inputs.dir(projectDir.resolve(extension.examplesDir))
@@ -406,8 +419,11 @@ class SpoofaxLangSpecPlugin : Plugin<Project> {
       // Only execute task if runTests is set to true.
       onlyIf { extension.runTests }
 
-      // Task dependencies: archiving the compiled language.
+      // Task dependencies:
+      // 1. Archive task, which provides the archive of the compiled language specification which we are loading in this task.
       dependsOn(langSpecArchiveTask)
+      // 2. SPT language dependency configuration, which influences which SPT language is loaded.
+      dependsOn(sptLanguageConfig)
       // Inputs: SPT files.
       inputs.files(project.fileTree(".") {
         include("**/*.spt")
