@@ -326,7 +326,9 @@ class SpoofaxLangSpecPlugin : Plugin<Project> {
     val archiveFile = resourceSrv.localPath(archiveLoc)!!
     val langSpecArchiveTask = project.tasks.register("spoofaxLangSpecArchive") {
       // Task dependencies:
-      // 1. Package task, which provides files that are archived with this task.
+      // 1. Language dependencies configuration, which influences which languages are loaded.
+      dependsOn(languageConfig)
+      // 2. Package task, which provides files that are archived with this task.
       dependsOn(langSpecPackageTask)
       if(extension.approximateDependencies) {
         val iconsDir = projectDir.resolve("icons")
@@ -343,6 +345,12 @@ class SpoofaxLangSpecPlugin : Plugin<Project> {
       // Outputs: the spoofax-language archive file.
       outputs.file(archiveFile)
 
+      doFirst {
+        // Requires languages and dialects to be loaded.
+        lazyLoadLanguages(project.languageConfig, project, spoofax)
+        lazyLoadDialects(projectLoc, project, spoofax)
+      }
+      
       doLast {
         metaBuilder.archive(metaBuilderInput)
         lazyLoadCompiledLanguage(archiveLoc, project, spoofax) // Test language archive by loading it.
