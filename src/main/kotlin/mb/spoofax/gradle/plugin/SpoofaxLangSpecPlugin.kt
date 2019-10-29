@@ -148,8 +148,11 @@ class SpoofaxLangSpecPlugin : Plugin<Project> {
       // Task dependencies:
       // 1. Language dependencies configuration, which influences which languages are loaded.
       dependsOn(languageConfig)
+      // General inputs:
+      // * Files from artifacts from all dependencies in the language configuration.
+      inputs.files(languageConfig)
       if(extension.approximateDependencies) {
-        // Inputs:
+        // Approximate inputs:
         // * `metaborg.yaml` config file
         inputs.file(projectDir.resolve("metaborg.yaml"))
         // * meta-language files
@@ -158,7 +161,7 @@ class SpoofaxLangSpecPlugin : Plugin<Project> {
           exclude("/src-gen", "/target", "/build", "/.gradle", "/.git")
         })
         // TODO: included files that are not in the project directory.
-        // Outputs:
+        // Approximate outputs:
         // * ESV
         outputs.file(targetMetaborgDir.resolve("editor.esv.af"))
         // * TODO: SDF2
@@ -175,9 +178,9 @@ class SpoofaxLangSpecPlugin : Plugin<Project> {
         // * TODO: Statix
         // * TODO: dynsem
       } else {
-        // Inputs: any file in the project directory.
+        // Conservative inputs: any file in the project directory.
         inputs.dir(projectDir)
-        // Outputs: any file in the project directory.
+        // Conservative outputs: any file in the project directory.
         outputs.dir(projectDir)
       }
 
@@ -201,10 +204,11 @@ class SpoofaxLangSpecPlugin : Plugin<Project> {
       dependsOn(languageConfig)
       // 2. Must run after build task, because there may be custom generateSources build steps which require files to be built.
       mustRunAfter(buildTask)
-      // Inputs:
+      // General inputs:
       // * Files from artifacts from all dependencies in the language configuration.
       inputs.files(languageConfig)
       if(extension.approximateDependencies) {
+        // Approximate inputs/outputs:
         // * `metaborg.yaml` config file
         inputs.file(projectDir.resolve("metaborg.yaml"))
         // Outputs:
@@ -215,9 +219,9 @@ class SpoofaxLangSpecPlugin : Plugin<Project> {
         // * generated permissive normalized grammar
         outputs.file(srcGenDir.resolve("syntax/normalized/permissive-norm.aterm"))
       } else {
-        // * Any file in the project directory.
+        // Conservative inputs: Any file in the project directory.
         inputs.dir(projectDir)
-        // Outputs: any file in the project directory.
+        // Conservative outputs: any file in the project directory.
         outputs.dir(projectDir)
       }
 
@@ -234,7 +238,11 @@ class SpoofaxLangSpecPlugin : Plugin<Project> {
       dependsOn(buildTask)
       // 3. Generate sources task, which provides sources which are compiled by this task.
       dependsOn(langSpecGenSourcesTask)
+      // General inputs:
+      // * Files from artifacts from all dependencies in the language configuration.
+      inputs.files(languageConfig)
       if(extension.approximateDependencies) {
+        // Approximate inputs/outputs:
         // * SDF
         // - old build and Stratego concrete syntax extensions
         inputs.files(project.fileTree(".") {
@@ -265,9 +273,9 @@ class SpoofaxLangSpecPlugin : Plugin<Project> {
         outputs.file(targetMetaborgDir.resolve("typesmart.context"))
         // TODO: Stratego include files and paths that are not in the project directory.
       } else {
-        // Inputs: any file in the project directory.
+        // Conservative inputs: any file in the project directory.
         inputs.dir(projectDir)
-        // Outputs: any file in the project directory.
+        // Convservative outputs: any file in the project directory.
         outputs.dir(projectDir)
       }
 
@@ -290,25 +298,29 @@ class SpoofaxLangSpecPlugin : Plugin<Project> {
       dependsOn(languageConfig)
       // 2. Compile task, which provides files that are packaged with this task.
       dependsOn(langSpecCompileTask)
+      // General inputs:
+      // * Files from artifacts from all dependencies in the language configuration.
+      inputs.files(languageConfig)
       if(extension.approximateDependencies) {
-        // Input: Stratego and Stratego Java strategies compiled class files.
+        // Approximate inputs/outputs:
+        // * Stratego and Stratego Java strategies compiled class files.
         inputs.files(targetDir.resolve("classes"))
-        // Stratego JAR
+        // * Stratego JAR
         if(config.strFormat() == StrategoFormat.jar) {
-          // Input: pp.af and .tbl files are included into the JAR file
+          // - pp.af and .tbl files are included into the JAR file
           inputs.files(project.fileTree(".") {
             include("**/*.pp.af", "**/*.tbl")
             exclude("/target", "/build", "/.gradle", "/.git")
           })
-          // Output: Stratego JAR file.
+          // - Stratego JAR file.
           outputs.file(targetMetaborgDir.resolve("stratego.jar"))
         }
-        // Output: Stratego Java strategies JAR file. Optional because it may not exist if there are no Java strategies.
+        // * Stratego Java strategies JAR file. Optional because it may not exist if there are no Java strategies.
         outputs.file(targetMetaborgDir.resolve("stratego-javastrat.jar")).optional()
       } else {
-        // Inputs: any file in the project directory.
+        // Conservative inputs: any file in the project directory.
         inputs.dir(projectDir)
-        // Outputs: any file in the project directory.
+        // Conservative outputs: any file in the project directory.
         outputs.dir(projectDir)
       }
 
@@ -330,19 +342,26 @@ class SpoofaxLangSpecPlugin : Plugin<Project> {
       dependsOn(languageConfig)
       // 2. Package task, which provides files that are archived with this task.
       dependsOn(langSpecPackageTask)
+      // General inputs:
+      // * Files from artifacts from all dependencies in the language configuration.
+      inputs.files(languageConfig)
       if(extension.approximateDependencies) {
+        // Approximate inputs:
+        // * icons
         val iconsDir = projectDir.resolve("icons")
         if(iconsDir.exists()) {
           inputs.dir(iconsDir)
         }
+        // * target/metaborg directory
         inputs.dir(targetMetaborgDir)
+        // * generated `metaborg.component.yaml file
         inputs.file(metaborgComponentYaml)
         // TODO: exported files.
       } else {
-        // Inputs: any file in the project directory.
+        // Conservative inputs: any file in the project directory.
         inputs.dir(projectDir)
       }
-      // Outputs: the spoofax-language archive file.
+      // General outputs: the spoofax-language archive file.
       outputs.file(archiveFile)
 
       doFirst {
