@@ -22,6 +22,10 @@ gradlePlugin {
       id = "org.metaborg.spoofax.gradle.langspec"
       implementationClass = "mb.spoofax.gradle.plugin.SpoofaxLangSpecPlugin"
     }
+    create("spoofax-project") {
+      id = "org.metaborg.spoofax.gradle.project"
+      implementationClass = "mb.spoofax.gradle.plugin.SpoofaxProjectPlugin"
+    }
   }
 }
 

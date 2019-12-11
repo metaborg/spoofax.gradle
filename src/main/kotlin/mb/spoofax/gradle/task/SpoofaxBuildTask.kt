@@ -70,7 +70,7 @@ open class SpoofaxBuildTask @Inject constructor(
   private fun execute() {
     // TODO: can make this incremental based on changes in the project directory?
     val inputBuilder = BuildInputBuilder(spoofaxProject).run {
-      if(!languageIds.isEmpty()) {
+      if(languageIds.isNotEmpty()) {
         withCompileDependencyLanguages(false)
         val languageImpls = languageIds.map {
           languageService.getImpl(it)
@@ -85,7 +85,7 @@ open class SpoofaxBuildTask @Inject constructor(
       withSelector(SpoofaxIgnoresSelector())
       withMessagePrinter(StreamMessagePrinter(sourceTextService, true, true, NullOutputStream(), NullOutputStream(), System.out))
       withThrowOnErrors(true)
-      if(!pardonedLanguages.isEmpty()) {
+      if(pardonedLanguages.isNotEmpty()) {
         withPardonedLanguageStrings(pardonedLanguages)
       }
       addTransformGoal(CompileGoal())
