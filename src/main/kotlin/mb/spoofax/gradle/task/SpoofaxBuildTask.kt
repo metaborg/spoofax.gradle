@@ -2,7 +2,9 @@ package mb.spoofax.gradle.task
 
 import org.gradle.api.DefaultTask
 import org.gradle.api.GradleException
-import org.gradle.api.tasks.*
+import org.gradle.api.tasks.Input
+import org.gradle.api.tasks.TaskAction
+import org.gradle.api.tasks.TaskContainer
 import org.metaborg.core.action.CompileGoal
 import org.metaborg.core.build.BuildInputBuilder
 import org.metaborg.core.build.dependency.IDependencyService
@@ -15,7 +17,9 @@ import org.metaborg.core.source.ISourceTextService
 import org.metaborg.spoofax.core.Spoofax
 import org.metaborg.spoofax.core.build.ISpoofaxBuilder
 import org.metaborg.spoofax.core.resource.SpoofaxIgnoresSelector
+import java.io.OutputStream
 import javax.inject.Inject
+
 
 fun TaskContainer.registerSpoofaxBuildTask(
   spoofax: Spoofax,
@@ -50,7 +54,7 @@ open class SpoofaxBuildTask @Inject constructor(
   fun addPardonedLanguage(languageName: String) {
     pardonedLanguages.add(languageName)
   }
-  
+
 
   @Input
   fun getLanguageIds(): List<LanguageIdentifier> {
@@ -66,7 +70,7 @@ open class SpoofaxBuildTask @Inject constructor(
   private fun execute() {
     // TODO: can make this incremental based on changes in the project directory?
     val inputBuilder = BuildInputBuilder(spoofaxProject).run {
-      if(!languageIds.isEmpty()) {
+      if(languageIds.isNotEmpty()) {
         withCompileDependencyLanguages(false)
         val languageImpls = languageIds.map {
           languageService.getImpl(it)
@@ -79,9 +83,9 @@ open class SpoofaxBuildTask @Inject constructor(
       withDefaultIncludePaths(true)
       withSourcesFromDefaultSourceLocations(true)
       withSelector(SpoofaxIgnoresSelector())
-      withMessagePrinter(StreamMessagePrinter(sourceTextService, true, true, System.out, System.out, System.out))
+      withMessagePrinter(StreamMessagePrinter(sourceTextService, true, true, NullOutputStream(), NullOutputStream(), System.out))
       withThrowOnErrors(true)
-      if(!pardonedLanguages.isEmpty()) {
+      if(pardonedLanguages.isNotEmpty()) {
         withPardonedLanguageStrings(pardonedLanguages)
       }
       addTransformGoal(CompileGoal())
@@ -92,4 +96,8 @@ open class SpoofaxBuildTask @Inject constructor(
       throw GradleException("Spoofax build failed; errors encountered")
     }
   }
+}
+
+class NullOutputStream : OutputStream() {
+  override fun write(b: Int) {}
 }

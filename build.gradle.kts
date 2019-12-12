@@ -1,8 +1,8 @@
 plugins {
-  id("org.metaborg.gradle.config.root-project") version "0.3.8"
-  id("org.metaborg.gradle.config.kotlin-gradle-plugin") version "0.3.8"
+  id("org.metaborg.gradle.config.root-project") version "0.3.12"
+  id("org.metaborg.gradle.config.kotlin-gradle-plugin") version "0.3.12"
   id("org.metaborg.gitonium") version "0.1.2"
-  kotlin("jvm") version "1.3.21"
+  kotlin("jvm") version "1.3.61"
   `kotlin-dsl`
 }
 
@@ -22,13 +22,17 @@ gradlePlugin {
       id = "org.metaborg.spoofax.gradle.langspec"
       implementationClass = "mb.spoofax.gradle.plugin.SpoofaxLangSpecPlugin"
     }
+    create("spoofax-project") {
+      id = "org.metaborg.spoofax.gradle.project"
+      implementationClass = "mb.spoofax.gradle.plugin.SpoofaxProjectPlugin"
+    }
   }
 }
 
 // Embed Spoofax Core dependencies into the plugin so that users do not receive the transitive dependency tree.
 val embedded: Configuration = configurations.create("embedded")
 configurations.getByName(JavaPlugin.COMPILE_ONLY_CONFIGURATION_NAME).extendsFrom(embedded)
-val spoofaxVersion = "2.5.6"
+val spoofaxVersion = "2.6.0-SNAPSHOT"
 dependencies {
   embedded("org.metaborg:org.metaborg.spoofax.meta.core:$spoofaxVersion")
   embedded("org.metaborg:org.metaborg.spt.core:$spoofaxVersion")

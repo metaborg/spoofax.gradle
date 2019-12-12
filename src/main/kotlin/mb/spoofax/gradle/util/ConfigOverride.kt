@@ -1,12 +1,19 @@
 package mb.spoofax.gradle.util
 
+import com.google.inject.Injector
+import mb.spoofax.gradle.plugin.SpoofaxExtensionBase
+import mb.spoofax.gradle.plugin.compileLanguageConfig
+import mb.spoofax.gradle.plugin.sourceLanguageConfig
 import org.apache.commons.configuration2.HierarchicalConfiguration
 import org.apache.commons.configuration2.tree.ImmutableNode
 import org.apache.commons.vfs2.FileObject
+import org.gradle.api.Project
+import org.gradle.api.plugins.JavaPlugin
 import org.metaborg.core.config.*
 import org.metaborg.core.language.LanguageIdentifier
 import org.metaborg.core.language.LanguageVersion
 import org.metaborg.core.messages.MessageBuilder
+import org.metaborg.core.resource.IResourceService
 import org.metaborg.spoofax.core.config.*
 import org.metaborg.spoofax.meta.core.config.*
 import javax.inject.Inject
@@ -111,4 +118,22 @@ data class ConfigOverride(
   override fun toString(): String {
     return "ConfigOverride(groupId=$groupId, id=$id, version=$version, metaborgVersion=$metaborgVersion, compileDeps=$compileDeps, sourceDeps=$sourceDeps, javaDeps=$javaDeps)"
   }
+}
+
+fun Project.createAndAddOverride(extension: SpoofaxExtensionBase, resourceSrv: IResourceService, injector: Injector) {
+  // Override Spoofax configuration from Gradle build script.
+  val configOverride = run {
+    val groupId = project.group.toString()
+    val id = project.name
+    val version = LanguageVersion.parse(project.version.toString())
+    val metaborgVersion = extension.metaborgVersion
+    val compileDeps = this.compileLanguageConfig.dependencies.map { it.toSpoofaxDependency() }
+    val sourceDeps = this.sourceLanguageConfig.dependencies.map { it.toSpoofaxDependency() }
+    val javaDeps = this.configurations.getByName(JavaPlugin.API_CONFIGURATION_NAME).allDependencies.map { it.toSpoofaxDependency() }
+    ConfigOverride(groupId, id, version, metaborgVersion, compileDeps, sourceDeps, javaDeps)
+  }
+  val projectLoc = resourceSrv.resolve(projectDir)
+  injector.getInstance(SpoofaxGradleProjectConfigService::class.java).addOverride(projectLoc, configOverride)
+  injector.getInstance(SpoofaxGradleLanguageComponentConfigService::class.java).addOverride(projectLoc, configOverride)
+  injector.getInstance(SpoofaxGradleLanguageSpecConfigService::class.java).addOverride(projectLoc, configOverride)
 }

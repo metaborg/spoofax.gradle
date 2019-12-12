@@ -4,10 +4,14 @@ import mb.spoofax.gradle.task.registerSpoofaxBuildTask
 import mb.spoofax.gradle.task.registerSpoofaxCleanTask
 import mb.spoofax.gradle.util.*
 import org.apache.commons.vfs2.FileObject
-import org.gradle.api.*
+import org.gradle.api.GradleException
+import org.gradle.api.Plugin
+import org.gradle.api.Project
 import org.gradle.api.artifacts.Configuration
 import org.gradle.api.artifacts.Dependency
-import org.gradle.api.plugins.*
+import org.gradle.api.plugins.BasePlugin
+import org.gradle.api.plugins.JavaLibraryPlugin
+import org.gradle.api.plugins.JavaPlugin
 import org.gradle.api.publish.PublishingExtension
 import org.gradle.api.publish.maven.MavenPublication
 import org.gradle.api.tasks.SourceSet
@@ -40,7 +44,7 @@ class SpoofaxLangSpecPlugin : Plugin<Project> {
     // Apply Java library plugin before afterEvaluate to make configurations available to extension.
     project.pluginManager.apply(JavaLibraryPlugin::class)
 
-    val extension = SpoofaxExtension(project)
+    val extension = SpoofaxLangSpecExtension(project)
     project.extensions.add("spoofax", extension)
 
     // Use a null module plugin loader for Spoofax, as service loading does not work well in a Gradle environment.
@@ -55,7 +59,7 @@ class SpoofaxLangSpecPlugin : Plugin<Project> {
     }
   }
 
-  private fun configure(project: Project, extension: SpoofaxExtension, spoofax: Spoofax, spoofaxMeta: SpoofaxMeta) {
+  private fun configure(project: Project, extension: SpoofaxLangSpecExtension, spoofax: Spoofax, spoofaxMeta: SpoofaxMeta) {
     val compileLanguageConfig = project.compileLanguageConfig
     val sourceLanguageConfig = project.sourceLanguageConfig
     val languageConfig = project.languageConfig
@@ -67,19 +71,7 @@ class SpoofaxLangSpecPlugin : Plugin<Project> {
     val projectLoc = resourceSrv.resolve(projectDir)
 
     // Override Spoofax configuration from Gradle build script.
-    val configOverride = run {
-      val groupId = project.group.toString()
-      val id = project.name
-      val version = LanguageVersion.parse(project.version.toString())
-      val metaborgVersion = extension.metaborgVersion
-      val compileDeps = compileLanguageConfig.dependencies.map { it.toSpoofaxDependency() }
-      val sourceDeps = sourceLanguageConfig.dependencies.map { it.toSpoofaxDependency() }
-      val javaDeps = javaApiConfig.allDependencies.map { it.toSpoofaxDependency() }
-      ConfigOverride(groupId, id, version, metaborgVersion, compileDeps, sourceDeps, javaDeps)
-    }
-    spoofaxMeta.injector.getInstance(SpoofaxGradleProjectConfigService::class.java).addOverride(projectLoc, configOverride)
-    spoofaxMeta.injector.getInstance(SpoofaxGradleLanguageComponentConfigService::class.java).addOverride(projectLoc, configOverride)
-    spoofaxMeta.injector.getInstance(SpoofaxGradleLanguageSpecConfigService::class.java).addOverride(projectLoc, configOverride)
+    project.createAndAddOverride(extension, resourceSrv, spoofaxMeta.injector)
 
     // Create Spoofax language specification project.
     val projectService = spoofax.projectService as ISimpleProjectService
@@ -145,8 +137,14 @@ class SpoofaxLangSpecPlugin : Plugin<Project> {
     val targetMetaborgDir = targetDir.resolve("metaborg")
     val buildTask = project.tasks.registerSpoofaxBuildTask(spoofax, langSpecProject)
     buildTask.configure {
+      // Task dependencies:
+      // 1. Language dependencies configuration, which influences which languages are loaded.
+      dependsOn(languageConfig)
+      // General inputs:
+      // * Files from artifacts from all dependencies in the language configuration.
+      inputs.files(languageConfig)
       if(extension.approximateDependencies) {
-        // Inputs:
+        // Approximate inputs:
         // * `metaborg.yaml` config file
         inputs.file(projectDir.resolve("metaborg.yaml"))
         // * meta-language files
@@ -155,7 +153,7 @@ class SpoofaxLangSpecPlugin : Plugin<Project> {
           exclude("/src-gen", "/target", "/build", "/.gradle", "/.git")
         })
         // TODO: included files that are not in the project directory.
-        // Outputs:
+        // Approximate outputs:
         // * ESV
         outputs.file(targetMetaborgDir.resolve("editor.esv.af"))
         // * TODO: SDF2
@@ -172,9 +170,9 @@ class SpoofaxLangSpecPlugin : Plugin<Project> {
         // * TODO: Statix
         // * TODO: dynsem
       } else {
-        // Inputs: any file in the project directory.
+        // Conservative inputs: any file in the project directory.
         inputs.dir(projectDir)
-        // Outputs: any file in the project directory.
+        // Conservative outputs: any file in the project directory.
         outputs.dir(projectDir)
       }
 
@@ -194,14 +192,15 @@ class SpoofaxLangSpecPlugin : Plugin<Project> {
     val metaborgComponentYaml = srcGenDir.resolve("metaborg.component.yaml")
     val langSpecGenSourcesTask = project.tasks.register("spoofaxLangSpecGenerateSources") {
       // Task dependencies:
-      // 1. Any task that contributes to the language configuration (languageConfig can influence dependencies in configuration, which in turn influences the src-gen/metaborg.component.yaml file.)
+      // 1. Language dependencies configuration, which can influence dependencies in configuration, which in turn influences the src-gen/metaborg.component.yaml file.
       dependsOn(languageConfig)
       // 2. Must run after build task, because there may be custom generateSources build steps which require files to be built.
       mustRunAfter(buildTask)
-      // Inputs:
+      // General inputs:
       // * Files from artifacts from all dependencies in the language configuration.
       inputs.files(languageConfig)
       if(extension.approximateDependencies) {
+        // Approximate inputs/outputs:
         // * `metaborg.yaml` config file
         inputs.file(projectDir.resolve("metaborg.yaml"))
         // Outputs:
@@ -212,9 +211,9 @@ class SpoofaxLangSpecPlugin : Plugin<Project> {
         // * generated permissive normalized grammar
         outputs.file(srcGenDir.resolve("syntax/normalized/permissive-norm.aterm"))
       } else {
-        // * Any file in the project directory.
+        // Conservative inputs: Any file in the project directory.
         inputs.dir(projectDir)
-        // Outputs: any file in the project directory.
+        // Conservative outputs: any file in the project directory.
         outputs.dir(projectDir)
       }
 
@@ -224,9 +223,18 @@ class SpoofaxLangSpecPlugin : Plugin<Project> {
       }
     }
     val langSpecCompileTask = project.tasks.register("spoofaxLangSpecCompile") {
-      // Task dependencies: build and generate-sources.
-      dependsOn(buildTask, langSpecGenSourcesTask)
+      // Task dependencies:
+      // 1. Language dependencies configuration, which influences which languages are loaded.
+      dependsOn(languageConfig)
+      // 2. Spoofax build task, which provides sources which are compiled by this task.
+      dependsOn(buildTask)
+      // 3. Generate sources task, which provides sources which are compiled by this task.
+      dependsOn(langSpecGenSourcesTask)
+      // General inputs:
+      // * Files from artifacts from all dependencies in the language configuration.
+      inputs.files(languageConfig)
       if(extension.approximateDependencies) {
+        // Approximate inputs/outputs:
         // * SDF
         // - old build and Stratego concrete syntax extensions
         inputs.files(project.fileTree(".") {
@@ -257,9 +265,9 @@ class SpoofaxLangSpecPlugin : Plugin<Project> {
         outputs.file(targetMetaborgDir.resolve("typesmart.context"))
         // TODO: Stratego include files and paths that are not in the project directory.
       } else {
-        // Inputs: any file in the project directory.
+        // Conservative inputs: any file in the project directory.
         inputs.dir(projectDir)
-        // Outputs: any file in the project directory.
+        // Convservative outputs: any file in the project directory.
         outputs.dir(projectDir)
       }
 
@@ -277,27 +285,34 @@ class SpoofaxLangSpecPlugin : Plugin<Project> {
     val compileJavaTask = project.tasks.getByName(JavaPlugin.COMPILE_JAVA_TASK_NAME)
     compileJavaTask.dependsOn(langSpecCompileTask)
     val langSpecPackageTask = project.tasks.register("spoofaxLangSpecPackage") {
-      // Task dependencies: compile.
+      // Task dependencies:
+      // 1. Language dependencies configuration, which influences which languages are loaded.
+      dependsOn(languageConfig)
+      // 2. Compile task, which provides files that are packaged with this task.
       dependsOn(langSpecCompileTask)
+      // General inputs:
+      // * Files from artifacts from all dependencies in the language configuration.
+      inputs.files(languageConfig)
       if(extension.approximateDependencies) {
-        // Input: Stratego and Stratego Java strategies compiled class files.
+        // Approximate inputs/outputs:
+        // * Stratego and Stratego Java strategies compiled class files.
         inputs.files(targetDir.resolve("classes"))
-        // Stratego JAR
+        // * Stratego JAR
         if(config.strFormat() == StrategoFormat.jar) {
-          // Input: pp.af and .tbl files are included into the JAR file
+          // - pp.af and .tbl files are included into the JAR file
           inputs.files(project.fileTree(".") {
             include("**/*.pp.af", "**/*.tbl")
             exclude("/target", "/build", "/.gradle", "/.git")
           })
-          // Output: Stratego JAR file.
+          // - Stratego JAR file.
           outputs.file(targetMetaborgDir.resolve("stratego.jar"))
         }
-        // Output: Stratego Java strategies JAR file. Optional because it may not exist if there are no Java strategies.
+        // * Stratego Java strategies JAR file. Optional because it may not exist if there are no Java strategies.
         outputs.file(targetMetaborgDir.resolve("stratego-javastrat.jar")).optional()
       } else {
-        // Inputs: any file in the project directory.
+        // Conservative inputs: any file in the project directory.
         inputs.dir(projectDir)
-        // Outputs: any file in the project directory.
+        // Conservative outputs: any file in the project directory.
         outputs.dir(projectDir)
       }
 
@@ -314,22 +329,38 @@ class SpoofaxLangSpecPlugin : Plugin<Project> {
     val archiveLoc = langSpecPaths.spxArchiveFile(config.identifier().toFileString())
     val archiveFile = resourceSrv.localPath(archiveLoc)!!
     val langSpecArchiveTask = project.tasks.register("spoofaxLangSpecArchive") {
-      // Task dependencies: package.
+      // Task dependencies:
+      // 1. Language dependencies configuration, which influences which languages are loaded.
+      dependsOn(languageConfig)
+      // 2. Package task, which provides files that are archived with this task.
       dependsOn(langSpecPackageTask)
+      // General inputs:
+      // * Files from artifacts from all dependencies in the language configuration.
+      inputs.files(languageConfig)
       if(extension.approximateDependencies) {
+        // Approximate inputs:
+        // * icons
         val iconsDir = projectDir.resolve("icons")
         if(iconsDir.exists()) {
           inputs.dir(iconsDir)
         }
+        // * target/metaborg directory
         inputs.dir(targetMetaborgDir)
+        // * generated `metaborg.component.yaml file
         inputs.file(metaborgComponentYaml)
         // TODO: exported files.
       } else {
-        // Inputs: any file in the project directory.
+        // Conservative inputs: any file in the project directory.
         inputs.dir(projectDir)
       }
-      // Outputs: the spoofax-language archive file.
+      // General outputs: the spoofax-language archive file.
       outputs.file(archiveFile)
+
+      doFirst {
+        // Requires languages and dialects to be loaded.
+        lazyLoadLanguages(project.languageConfig, project, spoofax)
+        lazyLoadDialects(projectLoc, project, spoofax)
+      }
 
       doLast {
         metaBuilder.archive(metaBuilderInput)
@@ -367,7 +398,8 @@ class SpoofaxLangSpecPlugin : Plugin<Project> {
     // Build examples tasks.
     val buildExamplesTask = project.tasks.registerSpoofaxBuildTask(spoofax, langSpecProject, "spoofaxBuildExamples")
     buildExamplesTask.configure {
-      // Task dependencies: archiving the compiled language.
+      // Task dependencies:
+      // 1. Archive task, which provides the archive of the compiled language specification which we are loading in this task.
       dependsOn(langSpecArchiveTask)
       // Inputs: any file in the project directory.
       inputs.dir(projectDir.resolve(extension.examplesDir))
@@ -406,8 +438,11 @@ class SpoofaxLangSpecPlugin : Plugin<Project> {
       // Only execute task if runTests is set to true.
       onlyIf { extension.runTests }
 
-      // Task dependencies: archiving the compiled language.
+      // Task dependencies:
+      // 1. Archive task, which provides the archive of the compiled language specification which we are loading in this task.
       dependsOn(langSpecArchiveTask)
+      // 2. SPT language dependency configuration, which influences which SPT language is loaded.
+      dependsOn(sptLanguageConfig)
       // Inputs: SPT files.
       inputs.files(project.fileTree(".") {
         include("**/*.spt")
@@ -492,103 +527,12 @@ class SpoofaxLangSpecPlugin : Plugin<Project> {
       }
     }
   }
-
-  private fun lazyLoadLanguages(languageConfig: Configuration, project: Project, spoofax: Spoofax) =
-    lazilyDo(project, "loadedLanguagesFrom-" + languageConfig.name) {
-      languageConfig.forEach { spoofaxLanguageFile ->
-        val spoofaxLanguageLoc = spoofax.resourceService.resolve(spoofaxLanguageFile)
-        try {
-          spoofax.languageDiscoveryService.languageFromArchive(spoofaxLanguageLoc)
-        } catch(e: MetaborgException) {
-          throw GradleException("Failed to load language from $spoofaxLanguageFile", e)
-        }
-      }
-    }
-
-  private fun lazyLoadDialects(projectLoc: FileObject, project: Project, spoofax: Spoofax) =
-    lazilyDo(project, "loadedDialects") {
-      val resources = ResourceUtils.find(projectLoc, SpoofaxIgnoresSelector())
-      val creations = ResourceUtils.toChanges(resources, ResourceChangeKind.Create)
-      spoofax.dialectProcessor.update(projectLoc, creations)
-    }
-
-  private fun lazyLoadCompiledLanguage(archiveLoc: FileObject, project: Project, spoofax: Spoofax) =
-    lazilyDo(project, "loadedCompiledLanguage") {
-      spoofax.languageDiscoveryService.languageFromArchive(archiveLoc)
-    }
-
-  private inline fun lazilyDo(project: Project, id: String, func: () -> Unit) {
-    if(project.extra.has(id)) return
-    func()
-    project.extra.set(id, true)
-  }
 }
 
-@Suppress("unused")
-open class SpoofaxExtension(private val project: Project) {
-  var metaborgGroup: String = SpoofaxBasePlugin.defaultMetaborgGroup
-  var metaborgVersion: String = SpoofaxBasePlugin.defaultMetaborgVersion
+open class SpoofaxLangSpecExtension(project: Project) : SpoofaxExtensionBase(project) {
   var createPublication: Boolean = true
   var buildExamples: Boolean = false
   var examplesDir: String = "example"
   var runTests: Boolean = true
   var approximateDependencies: Boolean = true
-
-
-  private val compileLanguageConfig = project.compileLanguageConfig
-
-  fun addCompileLanguageDep(group: String, name: String, version: String): Dependency {
-    val dependency = project.dependencies.create(group, name, version, Dependency.DEFAULT_CONFIGURATION)
-    project.dependencies.add(compileLanguageConfig.name, dependency) {
-      configureSpoofaxLanguageArtifact(dependency)
-    }
-    return dependency
-  }
-
-  fun addCompileLanguageProjectDep(path: String): Dependency {
-    val dependency = project.dependencies.project(path, Dependency.DEFAULT_CONFIGURATION)
-    project.dependencies.add(compileLanguageConfig.name, dependency) {
-      configureSpoofaxLanguageArtifact(dependency)
-    }
-    return dependency
-  }
-
-
-  private val sourceLanguageConfig = project.sourceLanguageConfig
-
-  fun addSourceLanguageDep(group: String, name: String, version: String): Dependency {
-    val dependency = project.dependencies.create(group, name, version, Dependency.DEFAULT_CONFIGURATION)
-    project.dependencies.add(sourceLanguageConfig.name, dependency) {
-      configureSpoofaxLanguageArtifact(dependency)
-    }
-    return dependency
-  }
-
-  fun addSourceLanguageProjectDep(path: String): Dependency {
-    val dependency = project.dependencies.project(path, Dependency.DEFAULT_CONFIGURATION)
-    project.dependencies.add(sourceLanguageConfig.name, dependency) {
-      configureSpoofaxLanguageArtifact(dependency)
-    }
-    return dependency
-  }
-
-
-  private val javaApiConfig = project.configurations.getByName(JavaPlugin.API_CONFIGURATION_NAME)
-
-  fun addSpoofaxCoreDep(): Dependency {
-    val dependency = project.dependencies.create(metaborgGroup, "org.metaborg.spoofax.core", metaborgVersion)
-    javaApiConfig.dependencies.add(dependency)
-    return dependency
-  }
-
-
-  fun addSpoofaxRepos() {
-    project.repositories {
-      maven("https://artifacts.metaborg.org/content/repositories/releases/")
-      maven("https://artifacts.metaborg.org/content/repositories/snapshots/")
-      maven("https://pluto-build.github.io/mvnrepository/")
-      maven("https://sugar-lang.github.io/mvnrepository/")
-      maven("http://nexus.usethesource.io/content/repositories/public/")
-    }
-  }
 }
