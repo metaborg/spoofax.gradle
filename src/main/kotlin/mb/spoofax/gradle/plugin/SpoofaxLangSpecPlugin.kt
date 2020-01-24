@@ -122,7 +122,8 @@ class SpoofaxLangSpecPlugin : Plugin<Project> {
       mainSourceSet.java {
         // Spoofax build uses the following additional source directories.
         srcDir("src/main/strategies")
-        srcDir("src-gen/stratego-java")
+        srcDir("src/main/ds")
+        srcDir("src-gen/java")
         srcDir("src-gen/ds-java")
         // Spoofax build expects compiled Java classes in (Maven-style) 'target/classes' directory.
         @Suppress("UnstableApiUsage")
