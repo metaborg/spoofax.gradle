@@ -150,7 +150,7 @@ class SpoofaxLangSpecPlugin : Plugin<Project> {
         inputs.file(projectDir.resolve("metaborg.yaml"))
         // * meta-language files
         inputs.files(project.fileTree(".") {
-          include("**/*.esv", "**/*.sdf", "**/*.def", "**/*.sdf3", "**/*.nabl", "**/*.ts", "**/*.nabl2", "**/*.statix", "**/*.ds")
+          include("**/*.esv", "**/*.sdf", "**/*.def", "**/*.sdf3", "**/*.nabl", "**/*.ts", "**/*.nabl2", "**/*.stx", "**/*.ds")
           exclude("/src-gen", "/target", "/build", "/.gradle", "/.git")
         })
         // TODO: included files that are not in the project directory.
@@ -168,7 +168,8 @@ class SpoofaxLangSpecPlugin : Plugin<Project> {
         // * TODO: TS
         // * NaBL2
         outputs.dir(srcGenDir.resolve("nabl2"))
-        // * TODO: Statix
+        // * Statix
+        outputs.dir(srcGenDir.resolve("statix"))
         // * TODO: dynsem
       } else {
         // Conservative inputs: any file in the project directory.
