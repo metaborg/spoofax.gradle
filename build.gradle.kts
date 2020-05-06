@@ -11,7 +11,7 @@ metaborg {
   kotlinLanguageVersion = "1.2"
 }
 
-val spoofaxVersion = "2.6.0-SNAPSHOT"
+val spoofaxVersion = "2.5.8"
 dependencies {
   api("org.metaborg:org.metaborg.spoofax.meta.core:$spoofaxVersion")
   api("org.metaborg:org.metaborg.spt.core:$spoofaxVersion")
