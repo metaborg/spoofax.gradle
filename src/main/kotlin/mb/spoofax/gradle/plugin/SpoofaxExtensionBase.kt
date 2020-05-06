@@ -60,11 +60,7 @@ open class SpoofaxExtensionBase(private val project: Project) {
 
   fun addSpoofaxRepos() {
     project.repositories {
-      maven("https://artifacts.metaborg.org/content/repositories/releases/")
-      maven("https://artifacts.metaborg.org/content/repositories/snapshots/")
-      maven("https://pluto-build.github.io/mvnrepository/")
-      maven("https://sugar-lang.github.io/mvnrepository/")
-      maven("http://nexus.usethesource.io/content/repositories/public/")
+      maven("https://artifacts.metaborg.org/content/groups/public/")
     }
   }
 }
