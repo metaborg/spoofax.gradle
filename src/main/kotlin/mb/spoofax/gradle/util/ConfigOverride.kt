@@ -2,20 +2,32 @@ package mb.spoofax.gradle.util
 
 import com.google.inject.Injector
 import mb.spoofax.gradle.plugin.SpoofaxExtensionBase
-import mb.spoofax.gradle.plugin.compileLanguageConfig
-import mb.spoofax.gradle.plugin.sourceLanguageConfig
+import mb.spoofax.gradle.plugin.compileLanguageFiles
+import mb.spoofax.gradle.plugin.sourceLanguageFiles
 import org.apache.commons.configuration2.HierarchicalConfiguration
 import org.apache.commons.configuration2.tree.ImmutableNode
 import org.apache.commons.vfs2.FileObject
 import org.gradle.api.Project
 import org.gradle.api.plugins.JavaPlugin
-import org.metaborg.core.config.*
+import org.metaborg.core.config.AConfigurationReaderWriter
+import org.metaborg.core.config.ConfigRequest
+import org.metaborg.core.config.ILanguageComponentConfig
+import org.metaborg.core.config.LanguageComponentConfig
+import org.metaborg.core.config.LanguageComponentConfigBuilder
+import org.metaborg.core.config.LanguageComponentConfigService
+import org.metaborg.core.config.ProjectConfig
 import org.metaborg.core.language.LanguageIdentifier
 import org.metaborg.core.language.LanguageVersion
 import org.metaborg.core.messages.MessageBuilder
 import org.metaborg.core.resource.IResourceService
-import org.metaborg.spoofax.core.config.*
-import org.metaborg.spoofax.meta.core.config.*
+import org.metaborg.spoofax.core.config.ISpoofaxProjectConfig
+import org.metaborg.spoofax.core.config.SpoofaxProjectConfig
+import org.metaborg.spoofax.core.config.SpoofaxProjectConfigBuilder
+import org.metaborg.spoofax.core.config.SpoofaxProjectConfigService
+import org.metaborg.spoofax.meta.core.config.ISpoofaxLanguageSpecConfig
+import org.metaborg.spoofax.meta.core.config.SpoofaxLanguageSpecConfig
+import org.metaborg.spoofax.meta.core.config.SpoofaxLanguageSpecConfigBuilder
+import org.metaborg.spoofax.meta.core.config.SpoofaxLanguageSpecConfigService
 import javax.inject.Inject
 
 class SpoofaxGradleProjectConfigService @Inject constructor(
@@ -24,7 +36,7 @@ class SpoofaxGradleProjectConfigService @Inject constructor(
 ) : SpoofaxProjectConfigService(configReaderWriter, configBuilder) {
   private val overrides = mutableMapOf<FileObject, ConfigOverride>()
 
-  fun addOverride(projectLoc: FileObject, override: ConfigOverride) {
+  fun setOverride(projectLoc: FileObject, override: ConfigOverride) {
     val configFile = getConfigFile(projectLoc)
     overrides[configFile] = override
   }
@@ -44,7 +56,7 @@ class SpoofaxGradleLanguageComponentConfigService @Inject constructor(
 ) : LanguageComponentConfigService(configReaderWriter, configBuilder) {
   private val overrides = mutableMapOf<FileObject, ConfigOverride>()
 
-  fun addOverride(projectLoc: FileObject, override: ConfigOverride) {
+  fun setOverride(projectLoc: FileObject, override: ConfigOverride) {
     val configFile = getConfigFile(projectLoc)
     overrides[configFile] = override
   }
@@ -65,7 +77,7 @@ class SpoofaxGradleLanguageSpecConfigService @Inject constructor(
 ) : SpoofaxLanguageSpecConfigService(configReaderWriter, configBuilder) {
   private val overrides = mutableMapOf<FileObject, ConfigOverride>()
 
-  fun addOverride(projectLoc: FileObject, override: ConfigOverride) {
+  fun setOverride(projectLoc: FileObject, override: ConfigOverride) {
     val configFile = getConfigFile(projectLoc)
     overrides[configFile] = override
   }
@@ -120,20 +132,21 @@ data class ConfigOverride(
   }
 }
 
-fun Project.createAndAddOverride(extension: SpoofaxExtensionBase, resourceSrv: IResourceService, injector: Injector) {
-  // Override Spoofax configuration from Gradle build script.
+fun Project.overrideConfig(extension: SpoofaxExtensionBase, injector: Injector, overrideDependencies: Boolean) {
   val configOverride = run {
-    val groupId = project.group.toString()
-    val id = project.name
-    val version = LanguageVersion.parse(project.version.toString())
+    val groupId = this.group.toString()
+    val id = this.name
+    val versionStr = this.version.toString()
+    val version = if(versionStr != Project.DEFAULT_VERSION) LanguageVersion.parse(versionStr) else null
     val metaborgVersion = extension.metaborgVersion
-    val compileDeps = this.compileLanguageConfig.dependencies.map { it.toSpoofaxDependency() }
-    val sourceDeps = this.sourceLanguageConfig.dependencies.map { it.toSpoofaxDependency() }
-    val javaDeps = this.configurations.getByName(JavaPlugin.API_CONFIGURATION_NAME).allDependencies.map { it.toSpoofaxDependency() }
+    // TODO: should use resolved configurations
+    val compileDeps = if(overrideDependencies) this.compileLanguageFiles.dependencies.map { it.toSpoofaxDependency() } else mutableListOf()
+    val sourceDeps = if(overrideDependencies) this.sourceLanguageFiles.dependencies.map { it.toSpoofaxDependency() } else mutableListOf()
+    val javaDeps = if(overrideDependencies) this.configurations.getByName(JavaPlugin.COMPILE_CLASSPATH_CONFIGURATION_NAME).allDependencies.map { it.toSpoofaxDependency() } else mutableListOf()
     ConfigOverride(groupId, id, version, metaborgVersion, compileDeps, sourceDeps, javaDeps)
   }
-  val projectLoc = resourceSrv.resolve(projectDir)
-  injector.getInstance(SpoofaxGradleProjectConfigService::class.java).addOverride(projectLoc, configOverride)
-  injector.getInstance(SpoofaxGradleLanguageComponentConfigService::class.java).addOverride(projectLoc, configOverride)
-  injector.getInstance(SpoofaxGradleLanguageSpecConfigService::class.java).addOverride(projectLoc, configOverride)
+  val projectLoc = injector.getInstance(IResourceService::class.java).resolve(projectDir)
+  injector.getInstance(SpoofaxGradleProjectConfigService::class.java).setOverride(projectLoc, configOverride)
+  injector.getInstance(SpoofaxGradleLanguageComponentConfigService::class.java).setOverride(projectLoc, configOverride)
+  injector.getInstance(SpoofaxGradleLanguageSpecConfigService::class.java).setOverride(projectLoc, configOverride)
 }

@@ -1,64 +1,42 @@
 package mb.spoofax.gradle.plugin
 
-import mb.spoofax.gradle.util.configureSpoofaxLanguageArtifact
+import mb.spoofax.gradle.util.toGradleDependency
 import org.gradle.api.Project
-import org.gradle.api.artifacts.Dependency
 import org.gradle.api.plugins.JavaPlugin
 import org.gradle.kotlin.dsl.*
+import org.metaborg.core.config.IProjectConfig
 
 open class SpoofaxExtensionBase(private val project: Project) {
   var metaborgGroup: String = SpoofaxBasePlugin.defaultMetaborgGroup
   var metaborgVersion: String = SpoofaxBasePlugin.defaultMetaborgVersion
 
+  var addCompileDependenciesFromMetaborgYaml: Boolean = true
+  var addSourceDependenciesFromMetaborgYaml: Boolean = true
+  var addJavaDependenciesFromMetaborgYaml: Boolean = true
 
-  private val compileLanguageConfig = project.compileLanguageConfig
 
-  fun addCompileLanguageDep(group: String, name: String, version: String): Dependency {
-    val dependency = project.dependencies.create(group, name, version, Dependency.DEFAULT_CONFIGURATION)
-    project.dependencies.add(compileLanguageConfig.name, dependency) {
-      configureSpoofaxLanguageArtifact(dependency)
+  internal fun addDependenciesToProject(config: IProjectConfig) {
+    if(addCompileDependenciesFromMetaborgYaml) {
+      for(langId in config.compileDeps()) {
+        val dependency = langId.toGradleDependency(project)
+        project.dependencies.add(project.compileLanguage.name, dependency)
+      }
     }
-    return dependency
-  }
-
-  fun addCompileLanguageProjectDep(path: String): Dependency {
-    val dependency = project.dependencies.project(path, Dependency.DEFAULT_CONFIGURATION)
-    project.dependencies.add(compileLanguageConfig.name, dependency) {
-      configureSpoofaxLanguageArtifact(dependency)
+    if(addSourceDependenciesFromMetaborgYaml) {
+      for(langId in config.sourceDeps()) {
+        val dependency = langId.toGradleDependency(project)
+        project.dependencies.add(project.sourceLanguage.name, dependency)
+      }
     }
-    return dependency
-  }
-
-
-  private val sourceLanguageConfig = project.sourceLanguageConfig
-
-  fun addSourceLanguageDep(group: String, name: String, version: String): Dependency {
-    val dependency = project.dependencies.create(group, name, version, Dependency.DEFAULT_CONFIGURATION)
-    project.dependencies.add(sourceLanguageConfig.name, dependency) {
-      configureSpoofaxLanguageArtifact(dependency)
+    if(addJavaDependenciesFromMetaborgYaml) {
+      for(id in config.javaDeps()) {
+        val dependency = id.toGradleDependency(project)
+        project.configurations.getByName(JavaPlugin.COMPILE_ONLY_CONFIGURATION_NAME).dependencies.add(dependency)
+      }
     }
-    return dependency
   }
 
-  fun addSourceLanguageProjectDep(path: String): Dependency {
-    val dependency = project.dependencies.project(path, Dependency.DEFAULT_CONFIGURATION)
-    project.dependencies.add(sourceLanguageConfig.name, dependency) {
-      configureSpoofaxLanguageArtifact(dependency)
-    }
-    return dependency
-  }
-
-
-  private val javaApiConfig = project.configurations.getByName(JavaPlugin.API_CONFIGURATION_NAME)
-
-  fun addSpoofaxCoreDep(): Dependency {
-    val dependency = project.dependencies.create(metaborgGroup, "org.metaborg.spoofax.core", metaborgVersion)
-    javaApiConfig.dependencies.add(dependency)
-    return dependency
-  }
-
-
-  fun addSpoofaxRepos() {
+  internal fun addSpoofaxRepo() {
     project.repositories {
       maven("https://artifacts.metaborg.org/content/groups/public/")
     }

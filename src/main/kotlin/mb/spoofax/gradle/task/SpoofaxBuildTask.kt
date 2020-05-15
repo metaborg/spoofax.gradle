@@ -20,10 +20,9 @@ import org.metaborg.spoofax.core.resource.SpoofaxIgnoresSelector
 import java.io.OutputStream
 import javax.inject.Inject
 
-
 fun TaskContainer.registerSpoofaxBuildTask(
   spoofax: Spoofax,
-  spoofaxProject: IProject,
+  spoofaxProjectSupplier: () -> IProject,
   name: String = "spoofaxBuild"
 ) = register(
   name,
@@ -33,7 +32,7 @@ fun TaskContainer.registerSpoofaxBuildTask(
   spoofax.dependencyService,
   spoofax.languagePathService,
   spoofax.builder,
-  spoofaxProject
+  spoofaxProjectSupplier
 )
 
 open class SpoofaxBuildTask @Inject constructor(
@@ -42,7 +41,7 @@ open class SpoofaxBuildTask @Inject constructor(
   private val dependencyService: IDependencyService,
   private val languagePathService: ILanguagePathService,
   private val builder: ISpoofaxBuilder,
-  private val spoofaxProject: IProject
+  private val spoofaxProjectSupplier: () -> IProject
 ) : DefaultTask() {
   private val languageIds: MutableList<LanguageIdentifier> = mutableListOf()
   private val pardonedLanguages: MutableList<String> = mutableListOf()
@@ -68,8 +67,7 @@ open class SpoofaxBuildTask @Inject constructor(
 
   @TaskAction
   private fun execute() {
-    // TODO: can make this incremental based on changes in the project directory?
-    val inputBuilder = BuildInputBuilder(spoofaxProject).run {
+    val inputBuilder = BuildInputBuilder(spoofaxProjectSupplier()).run {
       if(languageIds.isNotEmpty()) {
         withCompileDependencyLanguages(false)
         val languageImpls = languageIds.map {

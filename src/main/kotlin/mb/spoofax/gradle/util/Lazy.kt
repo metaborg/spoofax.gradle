@@ -1,15 +1,27 @@
 package mb.spoofax.gradle.util
 
+import com.google.inject.Injector
+import mb.spoofax.gradle.plugin.SpoofaxExtensionBase
 import org.apache.commons.vfs2.FileObject
 import org.gradle.api.GradleException
 import org.gradle.api.Project
 import org.gradle.api.artifacts.Configuration
-import org.gradle.kotlin.dsl.extra
+import org.gradle.kotlin.dsl.*
 import org.metaborg.core.MetaborgException
 import org.metaborg.core.resource.ResourceChangeKind
 import org.metaborg.core.resource.ResourceUtils
 import org.metaborg.spoofax.core.Spoofax
 import org.metaborg.spoofax.core.resource.SpoofaxIgnoresSelector
+
+fun lazyOverrideDependenciesInConfig(
+  project: Project,
+  extension: SpoofaxExtensionBase,
+  spoofax: Spoofax,
+  injector: Injector
+) = lazilyDo(project, "overrodeConfiguration") {
+  project.overrideConfig(extension, injector, true)
+  spoofax.recreateProject(project) // Recreate project to force configuration to be updated.
+}
 
 fun lazyLoadLanguages(languageConfig: Configuration, project: Project, spoofax: Spoofax) =
   lazilyDo(project, "loadedLanguagesFrom-" + languageConfig.name) {
