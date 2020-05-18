@@ -18,6 +18,7 @@ import org.apache.commons.vfs2.FileObject
 import org.gradle.api.GradleException
 import org.gradle.api.Plugin
 import org.gradle.api.Project
+import org.gradle.api.plugins.JavaLibraryPlugin
 import org.gradle.api.plugins.JavaPlugin
 import org.gradle.api.publish.PublishingExtension
 import org.gradle.api.publish.maven.MavenPublication
@@ -58,7 +59,7 @@ class SpoofaxLanguageSpecificationPlugin : Plugin<Project> {
   override fun apply(project: Project) {
     project.pluginManager.apply(LifecycleBasePlugin::class)
     project.pluginManager.apply(SpoofaxBasePlugin::class)
-    project.pluginManager.apply(JavaPlugin::class)
+    project.pluginManager.apply(JavaLibraryPlugin::class)
 
     val extension = SpoofaxLangSpecExtension(project)
     project.extensions.add("spoofax", extension)
@@ -68,9 +69,31 @@ class SpoofaxLanguageSpecificationPlugin : Plugin<Project> {
 
     spoofax.recreateProject(project)
 
+    configureProject(project)
+
     project.afterEvaluate {
       configureAfterEvaluate(this, extension, spoofax, spoofaxMeta)
     }
+  }
+
+  private fun configureProject(project: Project) {
+    // Configure Java source and output directories.
+    project.configure<SourceSetContainer> {
+      val mainSourceSet = getByName(SourceSet.MAIN_SOURCE_SET_NAME)
+      mainSourceSet.java {
+        // Spoofax build uses the following additional source directories.
+        srcDir("src/main/strategies")
+        srcDir("src/main/ds")
+        srcDir("src-gen/java")
+        srcDir("src-gen/ds-java")
+        // Spoofax build expects compiled Java classes in (Maven-style) 'target/classes' directory.
+        @Suppress("UnstableApiUsage")
+        outputDir = File(project.projectDir, "target/classes")
+      }
+    }
+
+    // Disable Java's JAR task, as we build our own JAR file.
+    project.tasks.getByName(JavaPlugin.JAR_TASK_NAME).enabled = false
   }
 
   private fun configureAfterEvaluate(
@@ -79,7 +102,7 @@ class SpoofaxLanguageSpecificationPlugin : Plugin<Project> {
     spoofax: Spoofax,
     spoofaxMeta: SpoofaxMeta
   ) {
-    configureProject(project, extension, spoofaxMeta)
+    configureProjectAfterEvaluate(project, extension, spoofaxMeta)
 
     val buildTask = configureBuildTask(project, extension, spoofax, spoofaxMeta)
     val generateSourcesTask = configureGenerateSourcesTask(project, extension, spoofax, spoofaxMeta, buildTask)
@@ -96,7 +119,7 @@ class SpoofaxLanguageSpecificationPlugin : Plugin<Project> {
     configureTestTask(project, extension, spoofax, spoofaxMeta, archiveTask, archiveLocation)
   }
 
-  private fun configureProject(
+  private fun configureProjectAfterEvaluate(
     project: Project,
     extension: SpoofaxLangSpecExtension,
     spoofaxMeta: SpoofaxMeta
@@ -116,21 +139,6 @@ class SpoofaxLanguageSpecificationPlugin : Plugin<Project> {
     // Add the Spoofax repository.
     if(extension.addSpoofaxRepository) {
       extension.addSpoofaxRepo()
-    }
-
-    // Configure Java source and output directories.
-    project.configure<SourceSetContainer> {
-      val mainSourceSet = getByName(SourceSet.MAIN_SOURCE_SET_NAME)
-      mainSourceSet.java {
-        // Spoofax build uses the following additional source directories.
-        srcDir("src/main/strategies")
-        srcDir("src/main/ds")
-        srcDir("src-gen/java")
-        srcDir("src-gen/ds-java")
-        // Spoofax build expects compiled Java classes in (Maven-style) 'target/classes' directory.
-        @Suppress("UnstableApiUsage")
-        outputDir = File(project.projectDir, "target/classes")
-      }
     }
 
     // Create publication from our component.
@@ -362,8 +370,10 @@ class SpoofaxLanguageSpecificationPlugin : Plugin<Project> {
       dependsOn(languageFiles)
       inputs.files({ languageFiles }) // Closure to defer to task execution time.
       // TODO: Stratego dialects through *.tbl files in non-output directories
-      // 2. Compile task, which provides files that are packaged with this task.
+      // 2. Spoofax compile task, which provides files that are packaged with this task.
       dependsOn(compileTask)
+      // 3. Java compile task, which provides class files that are packaged with this task.
+      dependsOn(project.tasks.getByName(JavaPlugin.COMPILE_JAVA_TASK_NAME))
       // General inputs:
       if(extension.approximateDependencies) {
         // Approximate inputs/outputs:
