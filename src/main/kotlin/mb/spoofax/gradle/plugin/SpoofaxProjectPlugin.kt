@@ -2,7 +2,6 @@ package mb.spoofax.gradle.plugin
 
 import mb.spoofax.gradle.task.registerSpoofaxBuildTask
 import mb.spoofax.gradle.task.registerSpoofaxCleanTask
-import mb.spoofax.gradle.util.recreateProject
 import mb.spoofax.gradle.util.createSpoofax
 import mb.spoofax.gradle.util.getProject
 import mb.spoofax.gradle.util.getProjectLocation
@@ -10,6 +9,7 @@ import mb.spoofax.gradle.util.lazyLoadDialects
 import mb.spoofax.gradle.util.lazyLoadLanguages
 import mb.spoofax.gradle.util.lazyOverrideDependenciesInConfig
 import mb.spoofax.gradle.util.overrideConfig
+import mb.spoofax.gradle.util.recreateProject
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.plugins.JavaPlugin
@@ -52,7 +52,8 @@ class SpoofaxProjectPlugin : Plugin<Project> {
 
   private fun configureBuildTask(project: Project, extension: SpoofaxProjectExtension, spoofax: Spoofax) {
     val languageFiles = project.languageFiles
-    project.tasks.registerSpoofaxBuildTask(spoofax, { spoofax.getProject(project) }, "spoofaxBuild").configure {
+    val task = project.tasks.registerSpoofaxBuildTask(spoofax, { spoofax.getProject(project) }, "spoofaxBuild")
+    task.configure {
       // Task dependencies:
       // 1. Language files, which influences which languages are loaded.
       dependsOn(languageFiles)
@@ -69,19 +70,19 @@ class SpoofaxProjectPlugin : Plugin<Project> {
         lazyLoadLanguages(languageFiles, project, spoofax)
         lazyLoadDialects(spoofax.getProjectLocation(project), project, spoofax)
       }
-
-      project.tasks.getByName(LifecycleBasePlugin.BUILD_TASK_NAME).dependsOn(this)
-      project.plugins.withId("java") {
-        // Some languages generate Java code, so make sure to run the Spoofax build before compiling Java code.
-        project.tasks.getByName(JavaPlugin.COMPILE_JAVA_TASK_NAME).dependsOn(this)
-      }
+    }
+    project.tasks.getByName(LifecycleBasePlugin.BUILD_TASK_NAME).dependsOn(task)
+    project.plugins.withId("java") {
+      // Some languages generate Java code, so make sure to run the Spoofax build before compiling Java code.
+      project.tasks.getByName(JavaPlugin.COMPILE_JAVA_TASK_NAME).dependsOn(task)
     }
   }
 
   private fun configureCleanTask(project: Project, extension: SpoofaxProjectExtension, spoofax: Spoofax) {
     val spoofaxProject = spoofax.getProject(project)
     val languageFiles = project.languageFiles
-    project.tasks.registerSpoofaxCleanTask(spoofax, spoofaxProject).configure {
+    val task = project.tasks.registerSpoofaxCleanTask(spoofax, spoofaxProject)
+    task.configure {
       // 1. Language files, which influences which languages are loaded.
       dependsOn(languageFiles)
       inputs.files({ languageFiles }) // Closure to defer to task execution time.
@@ -93,9 +94,8 @@ class SpoofaxProjectPlugin : Plugin<Project> {
         lazyLoadLanguages(languageFiles, project, spoofax)
         lazyLoadDialects(spoofaxProject.location(), project, spoofax)
       }
-
-      project.tasks.getByName(LifecycleBasePlugin.CLEAN_TASK_NAME).dependsOn(this)
     }
+    project.tasks.getByName(LifecycleBasePlugin.CLEAN_TASK_NAME).dependsOn(task)
   }
 }
 
