@@ -2,44 +2,143 @@ package mb.spoofax.gradle.plugin
 
 import org.gradle.api.Plugin
 import org.gradle.api.Project
+import org.gradle.api.artifacts.Configuration
+import org.gradle.api.attributes.AttributeCompatibilityRule
+import org.gradle.api.attributes.CompatibilityCheckDetails
+import org.gradle.api.attributes.Usage
+import org.gradle.api.component.SoftwareComponentFactory
+import org.gradle.api.internal.ReusableAction
+import org.gradle.api.model.ObjectFactory
 import org.metaborg.core.MetaborgConstants
-import org.metaborg.spoofax.core.SpoofaxConstants
+import javax.inject.Inject
 
-open class SpoofaxBasePlugin : Plugin<Project> {
+@Suppress("UnstableApiUsage")
+open class SpoofaxBasePlugin @Inject constructor(
+  private val objectFactory: ObjectFactory,
+  private val softwareComponentFactory: SoftwareComponentFactory
+) : Plugin<Project> {
   companion object {
-    const val compileLanguageConfig = "spoofaxCompileLanguage"
-    const val sourceLanguageConfig = "spoofaxSourceLanguage"
-    const val languageConfig = "spoofaxLanguage"
+    const val spoofaxLanguageUsage = "spoofax-language"
 
+
+    const val compileLanguage = "compileLanguage"
+    const val sourceLanguage = "sourceLanguage"
+
+    const val languageArchive = "languageArchive"
+
+    const val compileLanguageFiles = "compileLanguageFiles"
+    const val sourceLanguageFiles = "sourceLanguageFiles"
+    const val languageFiles = "languageFiles"
+
+    const val spoofaxLanguageComponent = "spoofax-language"
+
+
+    const val spoofaxLanguageType = "spoofax-language"
     const val spoofaxLanguageExtension = "spoofax-language"
+
 
     const val defaultMetaborgGroup = MetaborgConstants.METABORG_GROUP_ID
     const val defaultMetaborgVersion = MetaborgConstants.METABORG_VERSION
   }
 
   override fun apply(project: Project) {
-    val compileLanguageConfig = project.configurations.create(compileLanguageConfig) {
-      isVisible = false
-      isTransitive = false
+    // Attributes
+    val spoofaxLanguageUsage = objectFactory.named(Usage::class.java, spoofaxLanguageUsage)
+
+
+    // User-facing configurations
+    val compileLanguage = project.configurations.create(compileLanguage) {
+      description = "Language dependencies for which the compiler is executed"
       isCanBeConsumed = false
       isCanBeResolved = false
-    }
-    val sourceLanguageConfig = project.configurations.create(sourceLanguageConfig) {
       isVisible = false
-      isTransitive = false
+    }
+    val sourceLanguage = project.configurations.create(sourceLanguage) {
+      description = "Language dependencies for which the sources are available"
       isCanBeConsumed = false
       isCanBeResolved = false
-    }
-    project.configurations.create(languageConfig) {
       isVisible = false
-      isTransitive = false
+    }
+
+
+    // Consumable configurations
+    val languageArchive = project.configurations.create(languageArchive) {
+      description = "Language archive"
       isCanBeConsumed = true
-      isCanBeResolved = true
-      extendsFrom(compileLanguageConfig, sourceLanguageConfig)
+      isCanBeResolved = false
+      isVisible = false
+      isTransitive = false // Not transitive, as language dependencies are not transitive.
+      attributes.attribute(Usage.USAGE_ATTRIBUTE, spoofaxLanguageUsage)
     }
+
+
+    // Internal (resolvable) configurations
+    project.configurations.create(compileLanguageFiles) {
+      description = "Language files for which the compiler is executed"
+      isCanBeConsumed = false
+      isCanBeResolved = true
+      isVisible = false
+      isTransitive = false // Not transitive, as language dependencies are not transitive.
+      extendsFrom(compileLanguage)
+      attributes.attribute(Usage.USAGE_ATTRIBUTE, spoofaxLanguageUsage)
+    }
+    project.configurations.create(sourceLanguageFiles) {
+      description = "Language files for which sources are available"
+      isCanBeConsumed = false
+      isCanBeResolved = true
+      isVisible = false
+      isTransitive = false // Not transitive, as language dependencies are not transitive.
+      extendsFrom(sourceLanguage)
+      attributes.attribute(Usage.USAGE_ATTRIBUTE, spoofaxLanguageUsage)
+    }
+    project.configurations.create(languageFiles) {
+      description = "Language files"
+      isCanBeConsumed = false
+      isCanBeResolved = true
+      isVisible = false
+      isTransitive = false // Not transitive, as language dependencies are not transitive.
+      extendsFrom(compileLanguage, sourceLanguage)
+      attributes.attribute(Usage.USAGE_ATTRIBUTE, spoofaxLanguageUsage)
+    }
+
+
+    /*
+    Make Usage attribute "java-runtime" compatible with "spoofax-language", such that Spoofax languages published to
+    a Maven repository by the Spoofax 2 Maven plugin, which have the Usage attribute "java-runtime", can be consumed
+    by this plugin.
+    */
+    project.dependencies.attributesSchema {
+      attribute(Usage.USAGE_ATTRIBUTE) {
+        compatibilityRules.add(SpoofaxUsageCompatibilityRules::class.java)
+      }
+    }
+
+
+    // Create a spoofax-language software component.
+    val spoofaxLanguageComponent = softwareComponentFactory.adhoc(spoofaxLanguageComponent)
+    spoofaxLanguageComponent.addVariantsFromConfiguration(languageArchive) {
+      skip() // No transitive dependencies, so we can skip everything.
+    }
+    project.components.add(spoofaxLanguageComponent)
   }
 }
 
-val Project.compileLanguageConfig get() = this.configurations.getByName(SpoofaxBasePlugin.compileLanguageConfig)
-val Project.sourceLanguageConfig get() = this.configurations.getByName(SpoofaxBasePlugin.sourceLanguageConfig)
-val Project.languageConfig get() = this.configurations.getByName(SpoofaxBasePlugin.languageConfig)
+val Project.compileLanguage: Configuration get() = this.configurations.getByName(SpoofaxBasePlugin.compileLanguage)
+val Project.sourceLanguage: Configuration get() = this.configurations.getByName(SpoofaxBasePlugin.sourceLanguage)
+
+internal val Project.languageArchive: Configuration get() = this.configurations.getByName(SpoofaxBasePlugin.languageArchive)
+
+internal val Project.compileLanguageFiles: Configuration get() = this.configurations.getByName(SpoofaxBasePlugin.compileLanguageFiles)
+internal val Project.sourceLanguageFiles: Configuration get() = this.configurations.getByName(SpoofaxBasePlugin.sourceLanguageFiles)
+internal val Project.languageFiles: Configuration get() = this.configurations.getByName(SpoofaxBasePlugin.languageFiles)
+
+internal class SpoofaxUsageCompatibilityRules : AttributeCompatibilityRule<Usage>, ReusableAction {
+  override fun execute(details: CompatibilityCheckDetails<Usage>) {
+    val consumerValue = details.consumerValue!!.name
+    val producerValue = details.producerValue!!.name
+    if(consumerValue == SpoofaxBasePlugin.spoofaxLanguageComponent && producerValue == Usage.JAVA_RUNTIME) {
+      details.compatible()
+      return
+    }
+  }
+}

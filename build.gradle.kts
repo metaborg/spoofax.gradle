@@ -11,7 +11,7 @@ metaborg {
   kotlinLanguageVersion = "1.2"
 }
 
-val spoofaxVersion = "2.5.8"
+val spoofaxVersion = "2.5.9"
 dependencies {
   api("org.metaborg:org.metaborg.spoofax.meta.core:$spoofaxVersion")
   api("org.metaborg:org.metaborg.spt.core:$spoofaxVersion")
@@ -26,18 +26,17 @@ dependencies {
 
 gradlePlugin {
   plugins {
-    create("spoofax-langspec") {
+    create("spoofax-base") {
+      id = "org.metaborg.spoofax.gradle.base"
+      implementationClass = "mb.spoofax.gradle.plugin.SpoofaxBasePlugin"
+    }
+    create("spoofax-language-specification") {
       id = "org.metaborg.spoofax.gradle.langspec"
-      implementationClass = "mb.spoofax.gradle.plugin.SpoofaxLangSpecPlugin"
+      implementationClass = "mb.spoofax.gradle.plugin.SpoofaxLanguageSpecificationPlugin"
     }
     create("spoofax-project") {
       id = "org.metaborg.spoofax.gradle.project"
       implementationClass = "mb.spoofax.gradle.plugin.SpoofaxProjectPlugin"
     }
   }
-}
-
-gitonium {
-  // Disable snapshot dependency checks for releases, until we depend on a stable version of Spoofax Core.
-  checkSnapshotDependenciesInRelease = false
 }
