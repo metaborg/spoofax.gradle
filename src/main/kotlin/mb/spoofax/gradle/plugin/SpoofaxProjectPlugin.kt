@@ -2,7 +2,8 @@ package mb.spoofax.gradle.plugin
 
 import mb.spoofax.gradle.task.registerSpoofaxBuildTask
 import mb.spoofax.gradle.task.registerSpoofaxCleanTask
-import mb.spoofax.gradle.util.createSpoofax
+import mb.spoofax.gradle.util.SpoofaxInstance
+import mb.spoofax.gradle.util.SpoofaxInstanceCache
 import mb.spoofax.gradle.util.getProject
 import mb.spoofax.gradle.util.getProjectLocation
 import mb.spoofax.gradle.util.lazyLoadDialects
@@ -26,19 +27,21 @@ class SpoofaxProjectPlugin : Plugin<Project> {
     val extension = SpoofaxProjectExtension(project)
     project.extensions.add("spoofaxProject", extension)
 
-    val spoofax = createSpoofax(project.gradle)
-
-    spoofax.recreateProject(project)
+    val instance = SpoofaxInstanceCache[project]
+    instance.refresh()
+    instance.spoofax.recreateProject(project)
 
     project.afterEvaluate {
-      configureAfterEvaluate(this, extension, spoofax)
+      configureAfterEvaluate(this, extension, instance)
     }
   }
 
-  private fun configureAfterEvaluate(project: Project, extension: SpoofaxProjectExtension, spoofax: Spoofax) {
-    configureProject(project, extension, spoofax)
-    configureBuildTask(project, extension, spoofax)
-    configureCleanTask(project, extension, spoofax)
+  private fun configureAfterEvaluate(project: Project, extension: SpoofaxProjectExtension, spoofaxInstance: SpoofaxInstance) {
+    spoofaxInstance.run {
+      configureProject(project, extension, spoofax)
+      configureBuildTask(project, extension, spoofax)
+      configureCleanTask(project, extension, spoofax)
+    }
   }
 
   private fun configureProject(project: Project, extension: SpoofaxProjectExtension, spoofax: Spoofax) {

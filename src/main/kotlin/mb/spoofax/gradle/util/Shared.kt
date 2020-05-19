@@ -4,6 +4,7 @@ import org.apache.commons.vfs2.FileObject
 import org.gradle.api.GradleException
 import org.gradle.api.Project
 import org.gradle.api.invocation.Gradle
+import org.metaborg.core.MetaborgRuntimeException
 import org.metaborg.core.project.IProject
 import org.metaborg.core.project.ISimpleProjectService
 import org.metaborg.spoofax.core.Spoofax
@@ -11,27 +12,12 @@ import org.metaborg.spoofax.meta.core.SpoofaxExtensionModule
 import org.metaborg.spoofax.meta.core.SpoofaxMeta
 import org.metaborg.spoofax.meta.core.project.ISpoofaxLanguageSpec
 
-internal fun createSpoofax(gradle: Gradle): Spoofax {
-  // Use a null module plugin loader for SpoofaxMeta, as service loading does not work well in a Gradle environment.
-  val spoofax = Spoofax(NullModulePluginLoader(), SpoofaxGradleModule(), SpoofaxExtensionModule())
-  spoofax.configureAsHeadlessApplication()
-  gradle.buildFinished {
-    spoofax.close()
-  }
-  return spoofax
-}
-
-internal fun Spoofax.createSpoofaxMeta(gradle: Gradle): SpoofaxMeta {
-  // Use a null module plugin loader for SpoofaxMeta, as service loading does not work well in a Gradle environment.
-  val spoofaxMeta = SpoofaxMeta(this, NullModulePluginLoader(), SpoofaxGradleMetaModule())
-  gradle.buildFinished {
-    spoofaxMeta.close()
-  }
-  return spoofaxMeta;
-}
-
 internal fun Spoofax.getProjectLocation(project: Project): FileObject {
-  return this.resourceService.resolve(project.projectDir)
+  try {
+    return this.resourceService.resolve(project.projectDir)
+  } catch(e: MetaborgRuntimeException) {
+    throw GradleException("Failed to get project location for '$project'", e)
+  }
 }
 
 internal fun Spoofax.recreateProject(project: Project): IProject {
