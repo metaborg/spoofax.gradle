@@ -1,10 +1,11 @@
 package mb.spoofax.gradle.plugin
 
+import com.google.inject.Injector
 import mb.spoofax.gradle.task.SpoofaxBuildTask
 import mb.spoofax.gradle.task.registerSpoofaxBuildTask
 import mb.spoofax.gradle.task.registerSpoofaxCleanTask
-import mb.spoofax.gradle.util.createSpoofax
-import mb.spoofax.gradle.util.createSpoofaxMeta
+import mb.spoofax.gradle.util.SpoofaxInstance
+import mb.spoofax.gradle.util.SpoofaxInstanceCache
 import mb.spoofax.gradle.util.getLanguageSpecification
 import mb.spoofax.gradle.util.getProjectLocation
 import mb.spoofax.gradle.util.lazyLoadCompiledLanguage
@@ -36,7 +37,6 @@ import org.metaborg.spoofax.meta.core.SpoofaxMeta
 import org.metaborg.spoofax.meta.core.build.LanguageSpecBuildInput
 import org.metaborg.spoofax.meta.core.build.SpoofaxLangSpecCommonPaths
 import org.metaborg.spoofax.meta.core.config.StrategoFormat
-import org.metaborg.spt.core.SPTModule
 import org.metaborg.spt.core.SPTRunner
 import java.io.File
 
@@ -64,15 +64,14 @@ class SpoofaxLanguageSpecificationPlugin : Plugin<Project> {
     val extension = SpoofaxLangSpecExtension(project)
     project.extensions.add("spoofax", extension)
 
-    val spoofax = createSpoofax(project.gradle)
-    val spoofaxMeta = spoofax.createSpoofaxMeta(project.gradle)
-
-    spoofax.recreateProject(project)
+    val instance = SpoofaxInstanceCache[project]
+    instance.refresh()
+    instance.spoofax.recreateProject(project)
 
     configureProject(project)
 
     project.afterEvaluate {
-      configureAfterEvaluate(this, extension, spoofax, spoofaxMeta)
+      configureAfterEvaluate(this, extension, instance)
     }
   }
 
@@ -99,24 +98,25 @@ class SpoofaxLanguageSpecificationPlugin : Plugin<Project> {
   private fun configureAfterEvaluate(
     project: Project,
     extension: SpoofaxLangSpecExtension,
-    spoofax: Spoofax,
-    spoofaxMeta: SpoofaxMeta
+    spoofaxInstance: SpoofaxInstance
   ) {
-    configureProjectAfterEvaluate(project, extension, spoofaxMeta)
+    spoofaxInstance.run {
+      configureProjectAfterEvaluate(project, extension, spoofaxMeta)
 
-    val buildTask = configureBuildTask(project, extension, spoofax, spoofaxMeta)
-    val generateSourcesTask = configureGenerateSourcesTask(project, extension, spoofax, spoofaxMeta, buildTask)
-    val compileTask = configureCompileTask(project, extension, spoofax, spoofaxMeta, buildTask, generateSourcesTask)
-    val packageTask = configurePackageTask(project, extension, spoofax, spoofaxMeta, compileTask)
+      val buildTask = configureBuildTask(project, extension, spoofax, spoofaxMeta)
+      val generateSourcesTask = configureGenerateSourcesTask(project, extension, spoofax, spoofaxMeta, buildTask)
+      val compileTask = configureCompileTask(project, extension, spoofax, spoofaxMeta, buildTask, generateSourcesTask)
+      val packageTask = configurePackageTask(project, extension, spoofax, spoofaxMeta, compileTask)
 
-    val languageSpecification = spoofaxMeta.getLanguageSpecification(project)
-    val languageSpecificationPaths = SpoofaxLangSpecCommonPaths(languageSpecification.location())
-    val archiveLocation = languageSpecificationPaths.spxArchiveFile(languageSpecification.config().identifier().toFileString())
-    val archiveTask = configureArchiveTask(project, extension, spoofax, spoofaxMeta, packageTask, archiveLocation)
+      val languageSpecification = spoofaxMeta.getLanguageSpecification(project)
+      val languageSpecificationPaths = SpoofaxLangSpecCommonPaths(languageSpecification.location())
+      val archiveLocation = languageSpecificationPaths.spxArchiveFile(languageSpecification.config().identifier().toFileString())
+      val archiveTask = configureArchiveTask(project, extension, spoofax, spoofaxMeta, packageTask, archiveLocation)
 
-    configureCleanTask(project, extension, spoofax, spoofaxMeta)
-    configureBuildExamplesTask(project, extension, spoofax, spoofaxMeta, archiveTask, archiveLocation)
-    configureTestTask(project, extension, spoofax, spoofaxMeta, archiveTask, archiveLocation)
+      configureCleanTask(project, extension, spoofax, spoofaxMeta)
+      configureBuildExamplesTask(project, extension, spoofax, spoofaxMeta, archiveTask, archiveLocation)
+      configureTestTask(project, extension, spoofax, spoofaxMeta, sptInjector, archiveTask, archiveLocation)
+    }
   }
 
   private fun configureProjectAfterEvaluate(
@@ -550,6 +550,7 @@ class SpoofaxLanguageSpecificationPlugin : Plugin<Project> {
     extension: SpoofaxLangSpecExtension,
     spoofax: Spoofax,
     spoofaxMeta: SpoofaxMeta,
+    sptInjector: Injector,
     archiveTask: TaskProvider<*>,
     archiveLocation: FileObject
   ) {
@@ -591,7 +592,6 @@ class SpoofaxLanguageSpecificationPlugin : Plugin<Project> {
       doLast {
         val sptLangImpl = spoofax.languageService.getImpl(sptId)
           ?: throw GradleException("Failed to get SPT language implementation ($sptId)")
-        val sptInjector = spoofaxMeta.injector.createChildInjector(SPTModule())
         val sptRunner = sptInjector.getInstance(SPTRunner::class.java)
         val languageSpecification = spoofaxMeta.getLanguageSpecification(project)
         val langUnderTest = spoofax.languageService.getImpl(languageSpecification.config().identifier())

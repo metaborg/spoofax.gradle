@@ -1,9 +1,9 @@
 package mb.spoofax.gradle.util
 
-import mb.spoofax.gradle.plugin.SpoofaxBasePlugin
 import org.gradle.api.Project
-import org.gradle.api.artifacts.*
-import org.gradle.kotlin.dsl.create
+import org.gradle.api.artifacts.Dependency
+import org.gradle.api.artifacts.ExternalModuleDependency
+import org.gradle.kotlin.dsl.*
 import org.metaborg.core.language.LanguageIdentifier
 import org.metaborg.core.language.LanguageVersion
 
