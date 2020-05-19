@@ -4,6 +4,7 @@ import com.google.inject.Injector
 import mb.spoofax.gradle.task.SpoofaxBuildTask
 import mb.spoofax.gradle.task.registerSpoofaxBuildTask
 import mb.spoofax.gradle.task.registerSpoofaxCleanTask
+import mb.spoofax.gradle.util.NonConfigureOnlyBuildFinishedListener
 import mb.spoofax.gradle.util.SpoofaxInstance
 import mb.spoofax.gradle.util.SpoofaxInstanceCache
 import mb.spoofax.gradle.util.getLanguageSpecification
@@ -73,6 +74,10 @@ class SpoofaxLanguageSpecificationPlugin : Plugin<Project> {
     project.afterEvaluate {
       configureAfterEvaluate(this, extension, instance)
     }
+
+    project.gradle.addBuildListener(NonConfigureOnlyBuildFinishedListener {
+      instance.refresh()
+    })
   }
 
   private fun configureProject(project: Project) {

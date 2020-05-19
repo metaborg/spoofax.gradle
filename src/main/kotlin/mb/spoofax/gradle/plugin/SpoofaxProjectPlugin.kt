@@ -2,6 +2,7 @@ package mb.spoofax.gradle.plugin
 
 import mb.spoofax.gradle.task.registerSpoofaxBuildTask
 import mb.spoofax.gradle.task.registerSpoofaxCleanTask
+import mb.spoofax.gradle.util.NonConfigureOnlyBuildFinishedListener
 import mb.spoofax.gradle.util.SpoofaxInstance
 import mb.spoofax.gradle.util.SpoofaxInstanceCache
 import mb.spoofax.gradle.util.getProject
@@ -31,9 +32,9 @@ class SpoofaxProjectPlugin : Plugin<Project> {
     instance.refresh()
     instance.spoofax.recreateProject(project)
 
-    project.afterEvaluate {
-      configureAfterEvaluate(this, extension, instance)
-    }
+    project.gradle.addBuildListener(NonConfigureOnlyBuildFinishedListener {
+      instance.refresh()
+    })
   }
 
   private fun configureAfterEvaluate(project: Project, extension: SpoofaxProjectExtension, spoofaxInstance: SpoofaxInstance) {

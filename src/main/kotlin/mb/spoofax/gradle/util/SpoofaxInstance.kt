@@ -33,6 +33,7 @@ import org.metaborg.spoofax.meta.core.config.ISpoofaxLanguageSpecConfigService
 import org.metaborg.spoofax.meta.core.config.ISpoofaxLanguageSpecConfigWriter
 import org.metaborg.spoofax.meta.core.config.SpoofaxLanguageSpecConfigBuilder
 import org.metaborg.spt.core.SPTModule
+import java.util.*
 
 internal class SpoofaxInstance {
   private var spoofaxInternal: Spoofax? = null
@@ -94,7 +95,7 @@ internal class SpoofaxInstance {
 }
 
 internal object SpoofaxInstanceCache {
-  private val instances: MutableMap<Project, SpoofaxInstance> = mutableMapOf()
+  private val instances: WeakHashMap<Project, SpoofaxInstance> = WeakHashMap()
 
   operator fun get(project: Project): SpoofaxInstance = instances.getOrPut(project) { SpoofaxInstance() }
 }
