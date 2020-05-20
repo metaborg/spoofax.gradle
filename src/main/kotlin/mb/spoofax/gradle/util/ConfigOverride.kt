@@ -9,6 +9,7 @@ import org.apache.commons.configuration2.tree.ImmutableNode
 import org.apache.commons.vfs2.FileObject
 import org.gradle.api.Project
 import org.gradle.api.plugins.JavaPlugin
+import org.metaborg.core.MetaborgConstants
 import org.metaborg.core.config.AConfigurationReaderWriter
 import org.metaborg.core.config.ConfigRequest
 import org.metaborg.core.config.ILanguageComponentConfig
@@ -159,13 +160,13 @@ data class ConfigOverride(
   }
 }
 
-fun Project.overrideConfig(extension: SpoofaxExtensionBase, injector: Injector, overrideDependencies: Boolean) {
+fun Project.overrideConfig(@Suppress("UNUSED_PARAMETER") extension: SpoofaxExtensionBase, injector: Injector, overrideDependencies: Boolean) {
   val configOverride = run {
     val groupId = this.group.toString()
     val id = this.name
     val versionStr = this.version.toString()
     val version = if(versionStr != Project.DEFAULT_VERSION) LanguageVersion.parse(versionStr) else null
-    val metaborgVersion = extension.metaborgVersion
+    val metaborgVersion = MetaborgConstants.METABORG_VERSION
     val compileDeps = if(overrideDependencies) {
       this.compileLanguageFiles.resolvedConfiguration.resolvedArtifacts.map {
         it.toSpoofaxDependency()

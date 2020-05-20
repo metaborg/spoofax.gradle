@@ -4,9 +4,11 @@ import com.google.inject.Injector
 import mb.spoofax.gradle.task.SpoofaxBuildTask
 import mb.spoofax.gradle.task.registerSpoofaxBuildTask
 import mb.spoofax.gradle.task.registerSpoofaxCleanTask
+import mb.spoofax.gradle.task.registerSpoofaxTestTask
 import mb.spoofax.gradle.util.SpoofaxInstance
 import mb.spoofax.gradle.util.SpoofaxInstanceCache
 import mb.spoofax.gradle.util.getLanguageSpecification
+import mb.spoofax.gradle.util.getProject
 import mb.spoofax.gradle.util.getProjectLocation
 import mb.spoofax.gradle.util.lazyLoadCompiledLanguage
 import mb.spoofax.gradle.util.lazyLoadDialects
@@ -14,9 +16,7 @@ import mb.spoofax.gradle.util.lazyLoadLanguages
 import mb.spoofax.gradle.util.lazyOverrideDependenciesInConfig
 import mb.spoofax.gradle.util.overrideConfig
 import mb.spoofax.gradle.util.recreateProject
-import mb.spoofax.gradle.util.toGradleDependency
 import org.apache.commons.vfs2.FileObject
-import org.gradle.api.GradleException
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.plugins.JavaLibraryPlugin
@@ -28,16 +28,12 @@ import org.gradle.api.tasks.SourceSetContainer
 import org.gradle.api.tasks.TaskProvider
 import org.gradle.kotlin.dsl.*
 import org.gradle.language.base.plugins.LifecycleBasePlugin
-import org.metaborg.core.MetaborgException
-import org.metaborg.core.language.LanguageIdentifier
-import org.metaborg.core.language.LanguageVersion
+import org.metaborg.core.MetaborgConstants
 import org.metaborg.spoofax.core.Spoofax
-import org.metaborg.spoofax.core.SpoofaxConstants
 import org.metaborg.spoofax.meta.core.SpoofaxMeta
 import org.metaborg.spoofax.meta.core.build.LanguageSpecBuildInput
 import org.metaborg.spoofax.meta.core.build.SpoofaxLangSpecCommonPaths
 import org.metaborg.spoofax.meta.core.config.StrategoFormat
-import org.metaborg.spt.core.SPTRunner
 import java.io.File
 
 open class SpoofaxLangSpecExtension(project: Project) : SpoofaxExtensionBase(project) {
@@ -137,7 +133,7 @@ class SpoofaxLanguageSpecificationPlugin : Plugin<Project> {
 
     // Add a dependency to Spoofax core.
     if(extension.addSpoofaxCoreDependency) {
-      project.configurations.getByName(JavaPlugin.COMPILE_ONLY_CONFIGURATION_NAME).dependencies.add(project.dependencies.create("org.metaborg", "org.metaborg.spoofax.core", extension.metaborgVersion))
+      project.configurations.getByName(JavaPlugin.COMPILE_ONLY_CONFIGURATION_NAME).dependencies.add(project.dependencies.create("org.metaborg", "org.metaborg.spoofax.core", MetaborgConstants.METABORG_VERSION))
     }
 
     // Add the Spoofax repository.
@@ -558,54 +554,23 @@ class SpoofaxLanguageSpecificationPlugin : Plugin<Project> {
     archiveTask: TaskProvider<*>,
     archiveLocation: FileObject
   ) {
-    // TODO: this needs to mimick the configurations from the base plugin to work.
-    val sptLanguageConfig = project.configurations.create("sptLanguage") {
-      isVisible = false
-      isTransitive = false
-      isCanBeConsumed = false
-      isCanBeResolved = true
-    }
-    val sptId = LanguageIdentifier(extension.metaborgGroup, SpoofaxConstants.LANG_SPT_ID, LanguageVersion.parse(extension.metaborgVersion))
-    val sptDependency = sptId.toGradleDependency(project)
-    project.dependencies.add(sptLanguageConfig.name, sptDependency)
-
-    val task = project.tasks.register("spoofaxTest") {
+    val languageSpecification = spoofaxMeta.getLanguageSpecification(project)
+    val task = project.tasks.registerSpoofaxTestTask(spoofax, sptInjector, { spoofax.getProject(project) })
+    task.configure {
       // Only execute task if runTests is set to true.
       onlyIf { extension.runTests }
 
-      // Task dependencies:
-      // 1. Archive task, which provides the archive of the compiled language specification which we are loading in this task.
+      // Task dependencies
+      /// * Archive task, which provides the archive of the compiled language specification which we are loading in this task.
       dependsOn(archiveTask)
-      // 2. SPT language dependency configuration, which influences which SPT language is loaded.
-      dependsOn(sptLanguageConfig)
-      // Inputs: SPT files.
-      inputs.files(project.fileTree(".") {
-        include("**/*.spt")
-        exclude("/target", "/build", "/.gradle", "/.git")
-      })
-      // Outputs: SPT result file.
-      val sptResultFile = project.buildDir.resolve("spt/result.txt")
-      outputs.file(sptResultFile)
+
+      // Test the compiled language
+      languageUnderTest.set(languageSpecification.config().identifier())
 
       doFirst {
         // Requires compiled language and SPT language to be loaded.
         lazyLoadCompiledLanguage(archiveLocation, project, spoofax)
-        lazyLoadLanguages(sptLanguageConfig, project, spoofax)
-      }
-
-      doLast {
-        val sptLangImpl = spoofax.languageService.getImpl(sptId)
-          ?: throw GradleException("Failed to get SPT language implementation ($sptId)")
-        val sptRunner = sptInjector.getInstance(SPTRunner::class.java)
-        val languageSpecification = spoofaxMeta.getLanguageSpecification(project)
-        val langUnderTest = spoofax.languageService.getImpl(languageSpecification.config().identifier())
-        try {
-          sptRunner.test(languageSpecification, sptLangImpl, langUnderTest)
-          sptResultFile.writeText("success")
-        } catch(e: MetaborgException) {
-          sptResultFile.writeText("failed")
-          throw GradleException("SPT tests failed", e)
-        }
+        lazyLoadLanguages(project.sptLanguageFiles, project, spoofax)
       }
     }
     project.tasks.getByName(LifecycleBasePlugin.CHECK_TASK_NAME).dependsOn(task)

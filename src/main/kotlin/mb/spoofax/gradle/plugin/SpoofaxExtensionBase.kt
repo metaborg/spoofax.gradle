@@ -7,9 +7,6 @@ import org.gradle.kotlin.dsl.*
 import org.metaborg.core.config.IProjectConfig
 
 open class SpoofaxExtensionBase(private val project: Project) {
-  var metaborgGroup: String = SpoofaxBasePlugin.defaultMetaborgGroup
-  var metaborgVersion: String = SpoofaxBasePlugin.defaultMetaborgVersion
-
   var addCompileDependenciesFromMetaborgYaml: Boolean = true
   var addSourceDependenciesFromMetaborgYaml: Boolean = true
   var addJavaDependenciesFromMetaborgYaml: Boolean = true

@@ -1,5 +1,6 @@
 package mb.spoofax.gradle.plugin
 
+import mb.spoofax.gradle.util.toGradleDependency
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.artifacts.Configuration
@@ -10,7 +11,11 @@ import org.gradle.api.component.SoftwareComponentFactory
 import org.gradle.api.internal.ReusableAction
 import org.gradle.api.model.ObjectFactory
 import org.metaborg.core.MetaborgConstants
+import org.metaborg.core.language.LanguageIdentifier
+import org.metaborg.core.language.LanguageVersion
+import org.metaborg.spoofax.core.SpoofaxConstants
 import javax.inject.Inject
+import org.gradle.kotlin.dsl.*
 
 @Suppress("UnstableApiUsage")
 open class SpoofaxBasePlugin @Inject constructor(
@@ -29,6 +34,7 @@ open class SpoofaxBasePlugin @Inject constructor(
     const val compileLanguageFiles = "compileLanguageFiles"
     const val sourceLanguageFiles = "sourceLanguageFiles"
     const val languageFiles = "languageFiles"
+    const val sptLanguageFiles = "sptLanguageFiles"
 
     const val spoofaxLanguageComponent = "spoofax-language"
 
@@ -37,8 +43,7 @@ open class SpoofaxBasePlugin @Inject constructor(
     const val spoofaxLanguageExtension = "spoofax-language"
 
 
-    const val defaultMetaborgGroup = MetaborgConstants.METABORG_GROUP_ID
-    const val defaultMetaborgVersion = MetaborgConstants.METABORG_VERSION
+    val sptId = LanguageIdentifier(MetaborgConstants.METABORG_GROUP_ID, SpoofaxConstants.LANG_SPT_ID, LanguageVersion.parse(MetaborgConstants.METABORG_VERSION))
   }
 
   override fun apply(project: Project) {
@@ -100,6 +105,17 @@ open class SpoofaxBasePlugin @Inject constructor(
       extendsFrom(compileLanguage, sourceLanguage)
       attributes.attribute(Usage.USAGE_ATTRIBUTE, spoofaxLanguageUsage)
     }
+    project.configurations.create(sptLanguageFiles) {
+      description = "SPT language files"
+      isCanBeConsumed = false
+      isCanBeResolved = true
+      isVisible = false
+      isTransitive = false // Not transitive, as language dependencies are not transitive.
+      attributes.attribute(Usage.USAGE_ATTRIBUTE, spoofaxLanguageUsage)
+      defaultDependencies {
+        this.add(sptId.toGradleDependency(project))
+      }
+    }
 
 
     /*
@@ -131,6 +147,7 @@ internal val Project.languageArchive: Configuration get() = this.configurations.
 internal val Project.compileLanguageFiles: Configuration get() = this.configurations.getByName(SpoofaxBasePlugin.compileLanguageFiles)
 internal val Project.sourceLanguageFiles: Configuration get() = this.configurations.getByName(SpoofaxBasePlugin.sourceLanguageFiles)
 internal val Project.languageFiles: Configuration get() = this.configurations.getByName(SpoofaxBasePlugin.languageFiles)
+internal val Project.sptLanguageFiles: Configuration get() = this.configurations.getByName(SpoofaxBasePlugin.sptLanguageFiles)
 
 internal class SpoofaxUsageCompatibilityRules : AttributeCompatibilityRule<Usage>, ReusableAction {
   override fun execute(details: CompatibilityCheckDetails<Usage>) {

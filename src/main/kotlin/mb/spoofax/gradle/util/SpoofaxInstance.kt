@@ -62,7 +62,7 @@ internal class SpoofaxInstance {
     get() = if(sptInjectorInternal != null) {
       sptInjectorInternal!!
     } else {
-      val injector = createSptInjector(spoofaxMeta)
+      val injector = createSptInjector(spoofaxMeta.injector)
       sptInjectorInternal = injector
       injector
     }
@@ -79,18 +79,20 @@ internal class SpoofaxInstance {
     }
   }
 
-  private fun createSpoofax(): Spoofax {
-    val spoofax = Spoofax(NullModulePluginLoader(), SpoofaxGradleModule(), SpoofaxExtensionModule())
-    spoofax.configureAsHeadlessApplication()
-    return spoofax
-  }
+  companion object {
+    private fun createSpoofax(): Spoofax {
+      val spoofax = Spoofax(NullModulePluginLoader(), SpoofaxGradleModule(), SpoofaxExtensionModule(), org.metaborg.mbt.core.SpoofaxExtensionModule(), org.metaborg.spt.core.SpoofaxExtensionModule())
+      spoofax.configureAsHeadlessApplication()
+      return spoofax
+    }
 
-  private fun createSpoofaxMeta(spoofax: Spoofax): SpoofaxMeta {
-    return SpoofaxMeta(spoofax, NullModulePluginLoader(), SpoofaxGradleMetaModule())
-  }
+    private fun createSpoofaxMeta(spoofax: Spoofax): SpoofaxMeta {
+      return SpoofaxMeta(spoofax, NullModulePluginLoader(), SpoofaxGradleMetaModule())
+    }
 
-  private fun createSptInjector(spoofaxMeta: SpoofaxMeta): Injector {
-    return spoofaxMeta.injector.createChildInjector(SPTModule())
+    private fun createSptInjector(injector: Injector): Injector {
+      return injector.createChildInjector(SPTModule())
+    }
   }
 }
 

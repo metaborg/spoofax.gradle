@@ -38,5 +38,9 @@ gradlePlugin {
       id = "org.metaborg.spoofax.gradle.project"
       implementationClass = "mb.spoofax.gradle.plugin.SpoofaxProjectPlugin"
     }
+    create("spoofax-test") {
+      id = "org.metaborg.spoofax.gradle.test"
+      implementationClass = "mb.spoofax.gradle.plugin.SpoofaxTestPlugin"
+    }
   }
 }
