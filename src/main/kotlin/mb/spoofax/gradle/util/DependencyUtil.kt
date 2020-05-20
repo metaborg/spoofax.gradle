@@ -1,20 +1,16 @@
 package mb.spoofax.gradle.util
 
 import org.gradle.api.Project
-import org.gradle.api.artifacts.Dependency
 import org.gradle.api.artifacts.ExternalModuleDependency
+import org.gradle.api.artifacts.ResolvedArtifact
 import org.gradle.kotlin.dsl.*
 import org.metaborg.core.language.LanguageIdentifier
 import org.metaborg.core.language.LanguageVersion
 
-fun Dependency.toSpoofaxDependency(): LanguageIdentifier {
-  val group = this.group
-    ?: error("Cannot convert Gradle dependency '$this' to a Spoofax dependency, as it it has no group")
-  val name = this.name
-  val version = this.version
-    ?: error("Cannot convert Gradle dependency '$this' to a Spoofax dependency, as it it has no version")
-  val spoofaxVersion = LanguageVersion.parse(version)
-  return LanguageIdentifier(group, name, spoofaxVersion)
+fun ResolvedArtifact.toSpoofaxDependency(): LanguageIdentifier {
+  moduleVersion.id.run {
+    return LanguageIdentifier(group, name, LanguageVersion.parse(version))
+  }
 }
 
 fun LanguageIdentifier.toGradleDependency(project: Project, configuration: String? = null, classifier: String? = null, ext: String? = null): ExternalModuleDependency {
