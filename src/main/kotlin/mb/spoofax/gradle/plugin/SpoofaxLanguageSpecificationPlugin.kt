@@ -4,7 +4,6 @@ import com.google.inject.Injector
 import mb.spoofax.gradle.task.SpoofaxBuildTask
 import mb.spoofax.gradle.task.registerSpoofaxBuildTask
 import mb.spoofax.gradle.task.registerSpoofaxCleanTask
-import mb.spoofax.gradle.util.NonConfigureOnlyBuildFinishedListener
 import mb.spoofax.gradle.util.SpoofaxInstance
 import mb.spoofax.gradle.util.SpoofaxInstanceCache
 import mb.spoofax.gradle.util.getLanguageSpecification
@@ -66,7 +65,7 @@ class SpoofaxLanguageSpecificationPlugin : Plugin<Project> {
     project.extensions.add("spoofax", extension)
 
     val instance = SpoofaxInstanceCache[project]
-    instance.refresh()
+    instance.reset()
     instance.spoofax.recreateProject(project)
 
     configureProject(project)
@@ -75,9 +74,9 @@ class SpoofaxLanguageSpecificationPlugin : Plugin<Project> {
       configureAfterEvaluate(this, extension, instance)
     }
 
-    project.gradle.addBuildListener(NonConfigureOnlyBuildFinishedListener {
-      instance.refresh()
-    })
+    project.gradle.buildFinished {
+      instance.reset()
+    }
   }
 
   private fun configureProject(project: Project) {
@@ -169,6 +168,7 @@ class SpoofaxLanguageSpecificationPlugin : Plugin<Project> {
     val targetDir = projectDir.resolve("target")
     val targetMetaborgDir = targetDir.resolve("metaborg")
     val languageFiles = project.languageFiles
+    val languageSpecification = spoofaxMeta.getLanguageSpecification(project)
     val task = project.tasks.registerSpoofaxBuildTask(spoofax, { spoofaxMeta.getLanguageSpecification(project) })
     task.configure {
       // Task dependencies:
@@ -211,7 +211,6 @@ class SpoofaxLanguageSpecificationPlugin : Plugin<Project> {
         outputs.dir(projectDir)
       }
 
-      val languageSpecification = spoofaxMeta.getLanguageSpecification(project)
       languageSpecification.config().pardonedLanguages().forEach {
         addPardonedLanguage(it)
       }

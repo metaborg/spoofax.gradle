@@ -67,7 +67,7 @@ internal class SpoofaxInstance {
       injector
     }
 
-  fun refresh() {
+  fun reset() {
     sptInjectorInternal = null
     if(spoofaxMetaInternal != null) {
       spoofaxMetaInternal!!.close()
