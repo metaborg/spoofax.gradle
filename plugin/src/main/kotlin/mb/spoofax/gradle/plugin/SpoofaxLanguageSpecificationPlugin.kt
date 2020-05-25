@@ -70,7 +70,7 @@ class SpoofaxLanguageSpecificationPlugin : Plugin<Project> {
     instance.spoofax.recreateProject(project)
 
     val extension = SpoofaxLangSpecExtension(project)
-    project.extensions.add("spoofax", extension)
+    project.extensions.add("spoofaxLanguageSpecification", extension)
 
     configureProject(project)
 
@@ -184,6 +184,9 @@ class SpoofaxLanguageSpecificationPlugin : Plugin<Project> {
       // 1. Language files, which influences which languages are loaded.
       dependsOn(languageFiles)
       inputs.files({ languageFiles }) // Closure to defer to task execution time.
+      // 2. Extension properties
+      inputs.property("strategoFormat", extension.strategoFormat).optional(true)
+      inputs.property("approximateDependencies", extension.approximateDependencies)
       // TODO: Stratego dialects through *.tbl files in non-output directories
       // General inputs:
       if(extension.approximateDependencies.get()) {
@@ -230,6 +233,11 @@ class SpoofaxLanguageSpecificationPlugin : Plugin<Project> {
         lazyLoadLanguages(languageFiles, project, spoofax)
         lazyLoadDialects(spoofax.getProjectLocation(project), project, spoofax)
       }
+
+      doLast {
+        // Override Stratego provider in packed ESV file.
+        overrideStrategoProvider(project, extension)
+      }
     }
     return task
   }
@@ -253,6 +261,8 @@ class SpoofaxLanguageSpecificationPlugin : Plugin<Project> {
       dependsOn(compileClasspath)
       // 3. Must run after build task, because there may be custom generateSources build steps which require files to be built.
       mustRunAfter(buildTask)
+      // 4. Extension properties
+      inputs.property("approximateDependencies", extension.approximateDependencies)
       // General inputs:
       if(extension.approximateDependencies.get()) {
         // Approximate inputs/outputs:
@@ -282,26 +292,6 @@ class SpoofaxLanguageSpecificationPlugin : Plugin<Project> {
         val metaBuilderInput = LanguageSpecBuildInput(languageSpecification)
         spoofaxMeta.metaBuilder.initialize(metaBuilderInput)
         spoofaxMeta.metaBuilder.generateSources(metaBuilderInput, null)
-
-        // Override Stratego provider with the correct one based on the overridden stratego format.
-        if(extension.strategoFormat.isPresent) {
-          val esvAfFile = projectDir.resolve("target/metaborg/editor.esv.af")
-          if(esvAfFile.exists()) {
-            try {
-              val strCtree = "target/metaborg/stratego.ctree"
-              val strJar = "target/metaborg/stratego.ctree"
-              var content = esvAfFile.readText()
-              content = when(extension.strategoFormat.get()) {
-                StrategoFormat.ctree -> content.replace(strJar, strCtree)
-                StrategoFormat.jar -> content.replace(strCtree, strJar)
-                else -> content
-              }
-              esvAfFile.writeText(content)
-            } catch(e: IOException) {
-              throw GradleException("Cannot override Stratego format; cannot read file '$esvAfFile'", e)
-            }
-          }
-        }
       }
     }
   }
@@ -330,6 +320,9 @@ class SpoofaxLanguageSpecificationPlugin : Plugin<Project> {
       dependsOn(buildTask)
       // 3. Generate sources task, which provides sources which are compiled by this task.
       dependsOn(generateSourcesTask)
+      // 4. Extension properties
+      inputs.property("strategoFormat", extension.strategoFormat).optional(true)
+      inputs.property("approximateDependencies", extension.approximateDependencies)
       // General inputs:
       if(extension.approximateDependencies.get()) {
         // Approximate inputs/outputs:
@@ -378,6 +371,9 @@ class SpoofaxLanguageSpecificationPlugin : Plugin<Project> {
 
       doLast {
         spoofaxMeta.metaBuilder.compile(LanguageSpecBuildInput(languageSpecification))
+
+        // Override Stratego provider again, as compile runs the ESV compiler again.
+        overrideStrategoProvider(project, extension)
       }
     }
     project.tasks.getByName(JavaPlugin.COMPILE_JAVA_TASK_NAME).dependsOn(task)
@@ -406,6 +402,8 @@ class SpoofaxLanguageSpecificationPlugin : Plugin<Project> {
       dependsOn(compileTask)
       // 3. Java compile task, which provides class files that are packaged with this task.
       dependsOn(project.tasks.getByName(JavaPlugin.COMPILE_JAVA_TASK_NAME))
+      // 4. Extension properties
+      inputs.property("approximateDependencies", extension.approximateDependencies)
       // General inputs:
       if(extension.approximateDependencies.get()) {
         // Approximate inputs/outputs:
@@ -466,6 +464,8 @@ class SpoofaxLanguageSpecificationPlugin : Plugin<Project> {
       // TODO: Stratego dialects through *.tbl files in non-output directories
       // 2. Package task, which provides files that are archived with this task.
       dependsOn(packageTask)
+      // 3. Extension properties
+      inputs.property("approximateDependencies", extension.approximateDependencies)
       // General inputs:
       if(extension.approximateDependencies.get()) {
         // Approximate inputs:
@@ -512,6 +512,29 @@ class SpoofaxLanguageSpecificationPlugin : Plugin<Project> {
     return task
   }
 
+  private fun overrideStrategoProvider(project: Project, extension: SpoofaxLangSpecExtension) {
+    // Override Stratego provider with the correct one based on the overridden stratego format.
+    if(extension.strategoFormat.isPresent) {
+      val esvAfFile = project.projectDir.resolve("target/metaborg/editor.esv.af")
+      if(esvAfFile.exists()) {
+        try {
+          val strCtree = "target/metaborg/stratego.ctree"
+          val strJar = "target/metaborg/stratego.jar"
+          var content = esvAfFile.readText()
+          content = when(extension.strategoFormat.get()) {
+            StrategoFormat.ctree -> content.replace(strJar, strCtree)
+            StrategoFormat.jar -> content.replace(strCtree, strJar)
+            else -> content
+          }
+          esvAfFile.writeText(content)
+        } catch(e: IOException) {
+          throw GradleException("Cannot override Stratego format; cannot read file '$esvAfFile'", e)
+        }
+      }
+    }
+  }
+  
+
   private fun configureCleanTask(
     project: Project,
     extension: SpoofaxLangSpecExtension,
@@ -542,6 +565,7 @@ class SpoofaxLanguageSpecificationPlugin : Plugin<Project> {
     }
     project.tasks.getByName(LifecycleBasePlugin.CLEAN_TASK_NAME).dependsOn(task)
   }
+
 
   private fun configureBuildExamplesTask(
     project: Project,
@@ -576,6 +600,7 @@ class SpoofaxLanguageSpecificationPlugin : Plugin<Project> {
     }
     project.tasks.getByName(LifecycleBasePlugin.CHECK_TASK_NAME).dependsOn(task)
   }
+
 
   private fun configureTestTask(
     project: Project,

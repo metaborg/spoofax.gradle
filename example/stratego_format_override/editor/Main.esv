@@ -1,0 +1,25 @@
+module Main
+
+imports
+
+  libspoofax/color/default
+
+language
+
+  extensions : emp
+
+  provider : target/metaborg/stratego.ctree
+  provider : target/metaborg/stratego-javastrat.jar
+
+  table         : target/metaborg/sdf.tbl
+  start symbols : Start
+
+  line comment  : "//"
+  block comment : "/*" * "*/"
+  fences        : [ ] ( ) { }
+
+menus
+
+  menu: "Syntax" (openeditor)
+
+    action: "Show parsed AST" = debug-show-aterm (source)

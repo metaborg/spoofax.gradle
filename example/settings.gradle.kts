@@ -24,3 +24,5 @@ fun String.includeProject(id: String, path: String = "$this/$id") {
   includeProject("empty.example")
   includeProject("empty.test")
 }
+
+include("stratego_format_override")
