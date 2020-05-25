@@ -21,6 +21,7 @@ import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.plugins.JavaLibraryPlugin
 import org.gradle.api.plugins.JavaPlugin
+import org.gradle.api.provider.Property
 import org.gradle.api.publish.PublishingExtension
 import org.gradle.api.publish.maven.MavenPublication
 import org.gradle.api.tasks.SourceSet
@@ -37,17 +38,23 @@ import org.metaborg.spoofax.meta.core.config.StrategoFormat
 import java.io.File
 
 open class SpoofaxLangSpecExtension(project: Project) : SpoofaxExtensionBase(project) {
-  var addSpoofaxCoreDependency: Boolean = true
-  var addSpoofaxRepository: Boolean = true
+  var addSpoofaxCoreDependency: Property<Boolean> = project.objects.property()
+  var addSpoofaxRepository: Property<Boolean> = project.objects.property()
+  var createPublication: Property<Boolean> = project.objects.property()
+  var buildExamples: Property<Boolean> = project.objects.property()
+  var examplesDir: Property<String> = project.objects.property()
+  var runTests: Property<Boolean> = project.objects.property()
+  var approximateDependencies: Property<Boolean> = project.objects.property()
 
-  var createPublication: Boolean = true
-
-  var buildExamples: Boolean = false
-  var examplesDir: String = "example"
-
-  var runTests: Boolean = true
-
-  var approximateDependencies: Boolean = true
+  init {
+    addSpoofaxCoreDependency.convention(true)
+    addSpoofaxRepository.convention(true)
+    createPublication.convention(true)
+    buildExamples.convention(false)
+    examplesDir.convention("example")
+    runTests.convention(true)
+    approximateDependencies.convention(true)
+  }
 }
 
 @Suppress("unused", "UnstableApiUsage")
@@ -132,17 +139,20 @@ class SpoofaxLanguageSpecificationPlugin : Plugin<Project> {
     extension.addDependenciesToProject(languageSpecification.config())
 
     // Add a dependency to Spoofax core.
-    if(extension.addSpoofaxCoreDependency) {
+    extension.addSpoofaxCoreDependency.finalizeValue()
+    if(extension.addSpoofaxCoreDependency.get()) {
       project.configurations.getByName(JavaPlugin.COMPILE_ONLY_CONFIGURATION_NAME).dependencies.add(project.dependencies.create("org.metaborg", "org.metaborg.spoofax.core", MetaborgConstants.METABORG_VERSION))
     }
 
     // Add the Spoofax repository.
-    if(extension.addSpoofaxRepository) {
+    extension.addSpoofaxRepository.finalizeValue()
+    if(extension.addSpoofaxRepository.get()) {
       extension.addSpoofaxRepo()
     }
 
     // Create publication from our component.
-    if(extension.createPublication) {
+    extension.createPublication.finalizeValue()
+    if(extension.createPublication.get()) {
       project.pluginManager.withPlugin("maven-publish") {
         project.extensions.configure<PublishingExtension> {
           publications.create<MavenPublication>("SpoofaxLanguage") {
@@ -151,6 +161,9 @@ class SpoofaxLanguageSpecificationPlugin : Plugin<Project> {
         }
       }
     }
+
+    // Finalize common properties
+    extension.approximateDependencies.finalizeValue()
   }
 
   private fun configureBuildTask(
@@ -173,7 +186,7 @@ class SpoofaxLanguageSpecificationPlugin : Plugin<Project> {
       inputs.files({ languageFiles }) // Closure to defer to task execution time.
       // TODO: Stratego dialects through *.tbl files in non-output directories
       // General inputs:
-      if(extension.approximateDependencies) {
+      if(extension.approximateDependencies.get()) {
         // Approximate inputs:
         // * `metaborg.yaml` config file
         inputs.file(projectDir.resolve("metaborg.yaml"))
@@ -242,7 +255,7 @@ class SpoofaxLanguageSpecificationPlugin : Plugin<Project> {
       // 3. Must run after build task, because there may be custom generateSources build steps which require files to be built.
       mustRunAfter(buildTask)
       // General inputs:
-      if(extension.approximateDependencies) {
+      if(extension.approximateDependencies.get()) {
         // Approximate inputs/outputs:
         // * `metaborg.yaml` config file
         inputs.file(projectDir.resolve("metaborg.yaml"))
@@ -299,7 +312,7 @@ class SpoofaxLanguageSpecificationPlugin : Plugin<Project> {
       // 3. Generate sources task, which provides sources which are compiled by this task.
       dependsOn(generateSourcesTask)
       // General inputs:
-      if(extension.approximateDependencies) {
+      if(extension.approximateDependencies.get()) {
         // Approximate inputs/outputs:
         // * SDF
         // - old build and Stratego concrete syntax extensions
@@ -375,7 +388,7 @@ class SpoofaxLanguageSpecificationPlugin : Plugin<Project> {
       // 3. Java compile task, which provides class files that are packaged with this task.
       dependsOn(project.tasks.getByName(JavaPlugin.COMPILE_JAVA_TASK_NAME))
       // General inputs:
-      if(extension.approximateDependencies) {
+      if(extension.approximateDependencies.get()) {
         // Approximate inputs/outputs:
         // * Stratego and Stratego Java strategies compiled class files.
         inputs.files(targetDir.resolve("classes"))
@@ -435,7 +448,7 @@ class SpoofaxLanguageSpecificationPlugin : Plugin<Project> {
       // 2. Package task, which provides files that are archived with this task.
       dependsOn(packageTask)
       // General inputs:
-      if(extension.approximateDependencies) {
+      if(extension.approximateDependencies.get()) {
         // Approximate inputs:
         // * icons
         val iconsDir = projectDir.resolve("icons")
@@ -526,7 +539,7 @@ class SpoofaxLanguageSpecificationPlugin : Plugin<Project> {
       // 1. Archive task, which provides the archive of the compiled language specification which we are loading in this task.
       dependsOn(archiveTask)
       // Inputs: any file in the project directory.
-      inputs.dir(project.projectDir.resolve(extension.examplesDir))
+      inputs.dir(extension.examplesDir.map { project.projectDir.resolve(it) })
       // Outputs: up to date when creating the archive was up to date (skipped).
       outputs.upToDateWhen {
         archiveTask.get().state.upToDate
@@ -535,7 +548,7 @@ class SpoofaxLanguageSpecificationPlugin : Plugin<Project> {
       // Only build files of compiled language.
       addLanguage(languageSpecification.config().identifier())
       // Only execute task if buildExamples is set to true.
-      onlyIf { extension.buildExamples }
+      onlyIf { extension.buildExamples.finalizeValue(); extension.buildExamples.get() }
 
       doFirst {
         // Requires compiled language to be loaded.
@@ -558,7 +571,7 @@ class SpoofaxLanguageSpecificationPlugin : Plugin<Project> {
     val task = project.tasks.registerSpoofaxTestTask(spoofax, sptInjector, { spoofax.getProject(project) })
     task.configure {
       // Only execute task if runTests is set to true.
-      onlyIf { extension.runTests }
+      onlyIf { extension.runTests.finalizeValue(); extension.runTests.get() }
 
       // Task dependencies
       /// * Archive task, which provides the archive of the compiled language specification which we are loading in this task.

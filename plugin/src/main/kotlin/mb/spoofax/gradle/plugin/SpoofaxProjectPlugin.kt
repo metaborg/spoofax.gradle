@@ -28,7 +28,6 @@ open class SpoofaxProjectExtension(project: Project) : SpoofaxExtensionBase(proj
   var languageUnderTest: Property<LanguageIdentifier> = project.objects.property()
 }
 
-
 @Suppress("unused", "UnstableApiUsage")
 class SpoofaxProjectPlugin : Plugin<Project> {
   override fun apply(project: Project) {

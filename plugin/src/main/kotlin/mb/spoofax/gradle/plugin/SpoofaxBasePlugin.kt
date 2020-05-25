@@ -15,7 +15,6 @@ import org.metaborg.core.language.LanguageIdentifier
 import org.metaborg.core.language.LanguageVersion
 import org.metaborg.spoofax.core.SpoofaxConstants
 import javax.inject.Inject
-import org.gradle.kotlin.dsl.*
 
 @Suppress("UnstableApiUsage")
 open class SpoofaxBasePlugin @Inject constructor(

@@ -3,12 +3,10 @@ package mb.spoofax.gradle.util
 import org.apache.commons.vfs2.FileObject
 import org.gradle.api.GradleException
 import org.gradle.api.Project
-import org.gradle.api.invocation.Gradle
 import org.metaborg.core.MetaborgRuntimeException
 import org.metaborg.core.project.IProject
 import org.metaborg.core.project.ISimpleProjectService
 import org.metaborg.spoofax.core.Spoofax
-import org.metaborg.spoofax.meta.core.SpoofaxExtensionModule
 import org.metaborg.spoofax.meta.core.SpoofaxMeta
 import org.metaborg.spoofax.meta.core.project.ISpoofaxLanguageSpec
 
