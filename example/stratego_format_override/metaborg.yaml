@@ -1,0 +1,17 @@
+---
+id: org.metaborg:stratego_format_override:0.1.0-SNAPSHOT
+name: stratego_format_override
+dependencies:
+  compile:
+    - org.metaborg:org.metaborg.meta.lang.esv:${metaborgVersion}
+    - org.metaborg:org.metaborg.meta.lang.template:${metaborgVersion}
+  source:
+    - org.metaborg:meta.lib.spoofax:${metaborgVersion}
+pardonedLanguages:
+  - EditorService
+  - Stratego-Sugar
+language:
+  sdf:
+    sdf2table: java
+  stratego:
+    format: ctree

@@ -1,0 +1,5 @@
+module test
+
+language stratego_format_override
+
+test aterm [[]] transform "Show parsed AST" to Empty()

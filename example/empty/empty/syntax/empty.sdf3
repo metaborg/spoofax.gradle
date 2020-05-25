@@ -1,0 +1,13 @@
+module empty
+
+lexical syntax
+
+  LAYOUT = [\ \t\n\r]
+
+context-free start-symbols
+
+  Start
+
+context-free syntax
+
+  Start.Empty = <>
