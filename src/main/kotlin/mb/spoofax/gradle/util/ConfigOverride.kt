@@ -168,22 +168,26 @@ fun Project.overrideConfig(@Suppress("UNUSED_PARAMETER") extension: SpoofaxExten
     val version = if(versionStr != Project.DEFAULT_VERSION) LanguageVersion.parse(versionStr) else null
     val metaborgVersion = MetaborgConstants.METABORG_VERSION
     val compileDeps = if(overrideDependencies) {
-      this.compileLanguageFiles.resolvedConfiguration.resolvedArtifacts.map {
+      compileLanguageFiles.resolvedConfiguration.firstLevelModuleDependencies.map {
         it.toSpoofaxDependency()
       }
     } else {
       mutableListOf()
     }
     val sourceDeps = if(overrideDependencies) {
-      this.sourceLanguageFiles.resolvedConfiguration.resolvedArtifacts.map {
+      sourceLanguageFiles.resolvedConfiguration.firstLevelModuleDependencies.map {
         it.toSpoofaxDependency()
       }
     } else {
       mutableListOf()
     }
     val javaDeps = if(overrideDependencies) {
-      this.configurations.getByName(JavaPlugin.COMPILE_CLASSPATH_CONFIGURATION_NAME).resolvedConfiguration.resolvedArtifacts.map {
-        it.toSpoofaxDependency()
+      if(plugins.hasPlugin(JavaPlugin::class.java)) {
+        configurations.getByName(JavaPlugin.COMPILE_CLASSPATH_CONFIGURATION_NAME).resolvedConfiguration.firstLevelModuleDependencies.map {
+          it.toSpoofaxDependency()
+        }
+      } else {
+        mutableListOf()
       }
     } else {
       mutableListOf()

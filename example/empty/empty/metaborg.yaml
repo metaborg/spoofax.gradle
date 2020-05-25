@@ -1,0 +1,14 @@
+---
+id: org.metaborg:empty:0.1.0-SNAPSHOT
+name: empty
+dependencies:
+  compile:
+    - org.metaborg:org.metaborg.meta.lang.esv:${metaborgVersion}
+    - org.metaborg:org.metaborg.meta.lang.template:${metaborgVersion}
+  source:
+    - org.metaborg:meta.lib.spoofax:${metaborgVersion}
+pardonedLanguages:
+  - EditorService
+language:
+  sdf:
+    sdf2table: java

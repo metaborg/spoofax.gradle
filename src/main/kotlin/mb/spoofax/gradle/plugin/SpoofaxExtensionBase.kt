@@ -25,7 +25,7 @@ open class SpoofaxExtensionBase(private val project: Project) {
         project.dependencies.add(project.sourceLanguage.name, dependency)
       }
     }
-    if(addJavaDependenciesFromMetaborgYaml) {
+    if(addJavaDependenciesFromMetaborgYaml && project.plugins.hasPlugin(JavaPlugin::class.java)) {
       for(id in config.javaDeps()) {
         val dependency = id.toGradleDependency(project)
         project.configurations.getByName(JavaPlugin.COMPILE_ONLY_CONFIGURATION_NAME).dependencies.add(dependency)

@@ -10,6 +10,7 @@ import mb.spoofax.gradle.util.lazyLoadLanguages
 import mb.spoofax.gradle.util.lazyOverrideDependenciesInConfig
 import mb.spoofax.gradle.util.overrideConfig
 import mb.spoofax.gradle.util.recreateProject
+import org.gradle.api.GradleException
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.provider.Property
@@ -54,10 +55,15 @@ class SpoofaxTestPlugin : Plugin<Project> {
   }
 
   private fun configureProjectAfterEvaluate(project: Project, extension: SpoofaxTestExtension, spoofax: Spoofax, spoofaxMeta: SpoofaxMeta) {
+    // Check if languageUnderTest property was set
+    extension.languageUnderTest.finalizeValue()
+    if(!extension.languageUnderTest.isPresent) {
+      throw GradleException("spoofaxTest.languageUnderTest property was not set on $project")
+    }
     // Override the language identifier and metaborgVersion in the configuration with values from the Gradle project.
     project.overrideConfig(extension, spoofaxMeta.injector, false)
 
-    // Add dependencies to corresponding configurations.
+    // Add dependencies from metaborg.yaml to the corresponding Gradle configurations.
     val spoofaxProject = spoofax.getProject(project)
     extension.addDependenciesToProject(spoofaxProject.config())
   }
