@@ -11,7 +11,8 @@ import mb.spoofax.gradle.util.getProjectLocation
 import mb.spoofax.gradle.util.lazyLoadDialects
 import mb.spoofax.gradle.util.lazyLoadLanguages
 import mb.spoofax.gradle.util.lazyOverrideDependenciesInConfig
-import mb.spoofax.gradle.util.overrideConfig
+import mb.spoofax.gradle.util.overrideIdentifiers
+import mb.spoofax.gradle.util.overrideMetaborgVersion
 import mb.spoofax.gradle.util.recreateProject
 import org.gradle.api.Plugin
 import org.gradle.api.Project
@@ -34,12 +35,12 @@ class SpoofaxProjectPlugin : Plugin<Project> {
     project.pluginManager.apply(LifecycleBasePlugin::class)
     project.pluginManager.apply(SpoofaxBasePlugin::class)
 
-    val extension = SpoofaxProjectExtension(project)
-    project.extensions.add("spoofaxProject", extension)
-
     val instance = SpoofaxInstanceCache[project]
     instance.reset()
     instance.spoofax.recreateProject(project)
+
+    val extension = SpoofaxProjectExtension(project)
+    project.extensions.add("spoofaxProject", extension)
 
     project.afterEvaluate {
       configureAfterEvaluate(this, extension, instance)
@@ -60,8 +61,9 @@ class SpoofaxProjectPlugin : Plugin<Project> {
   }
 
   private fun configureProjectAfterEvaluate(project: Project, extension: SpoofaxProjectExtension, spoofax: Spoofax, spoofaxMeta: SpoofaxMeta) {
-    // Override the language identifier and metaborgVersion in the configuration with values from the Gradle project.
-    project.overrideConfig(extension, spoofaxMeta.injector, false)
+    // Override the metaborgVersion and language identifier in the configuration, with values from the extension.
+    extension.overrideMetaborgVersion()
+    extension.overrideIdentifiers()
 
     // Add dependencies to corresponding configurations.
     val spoofaxProject = spoofax.getProject(project)
@@ -84,7 +86,7 @@ class SpoofaxProjectPlugin : Plugin<Project> {
 
       doFirst {
         // Requires configuration override, languages, and dialects to be loaded.
-        lazyOverrideDependenciesInConfig(project, extension, spoofax, spoofaxMeta.injector)
+        lazyOverrideDependenciesInConfig(extension)
         lazyLoadLanguages(languageFiles, project, spoofax)
         lazyLoadDialects(spoofax.getProjectLocation(project), project, spoofax)
       }
@@ -108,7 +110,7 @@ class SpoofaxProjectPlugin : Plugin<Project> {
 
       doFirst {
         // Requires configuration override, languages, and dialects to be loaded.
-        lazyOverrideDependenciesInConfig(project, extension, spoofax, spoofaxMeta.injector)
+        lazyOverrideDependenciesInConfig(extension)
         lazyLoadLanguages(languageFiles, project, spoofax)
         lazyLoadDialects(spoofaxProject.location(), project, spoofax)
       }
@@ -132,7 +134,7 @@ class SpoofaxProjectPlugin : Plugin<Project> {
 
       doFirst {
         // Requires configuration override, languages, and dialects to be loaded.
-        lazyOverrideDependenciesInConfig(project, extension, spoofax, spoofaxMeta.injector)
+        lazyOverrideDependenciesInConfig(extension)
         lazyLoadLanguages(languageFiles, project, spoofax)
         lazyLoadDialects(spoofaxProject.location(), project, spoofax)
       }

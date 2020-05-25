@@ -7,3 +7,7 @@ plugins {
 spoofaxTest {
   languageUnderTest.set(LanguageIdentifier.parse("$group:empty:$version"))
 }
+
+dependencies {
+  compileLanguage(project(":empty"))
+}

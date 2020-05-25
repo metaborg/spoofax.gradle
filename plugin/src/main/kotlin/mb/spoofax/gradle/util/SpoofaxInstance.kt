@@ -139,6 +139,8 @@ private class SpoofaxGradleMetaModule : SpoofaxMetaModule() {
   override fun bindLanguageSpecConfig() {
     bind(ILanguageSpecConfigWriter::class.java).to(LanguageSpecConfigService::class.java).`in`(Singleton::class.java)
 
+    bind(SpoofaxGradleConfigOverrides::class.java).`in`(Singleton::class.java)
+
     bind(SpoofaxGradleLanguageSpecConfigService::class.java).`in`(Singleton::class.java)
     bind(ILanguageSpecConfigService::class.java).to(SpoofaxGradleLanguageSpecConfigService::class.java)
     bind(ISpoofaxLanguageSpecConfigService::class.java).to(SpoofaxGradleLanguageSpecConfigService::class.java)

@@ -2,8 +2,15 @@ module Main
 
 imports
 
-  Syntax
+  libspoofax/color/default
 
 language
 
   extensions : emp
+
+  table         : target/metaborg/sdf.tbl
+  start symbols : Start
+
+  line comment  : "//"
+  block comment : "/*" * "*/"
+  fences        : [ ] ( ) { }
