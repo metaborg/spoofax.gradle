@@ -84,7 +84,7 @@ class SpoofaxTestPlugin : Plugin<Project> {
       // 1. Language files, which influences which languages are loaded.
       dependsOn(languageFiles)
       inputs.files({ languageFiles }) // Closure to defer to task execution time.
-      
+
       // Test the specified language under test.
       languageUnderTest.set(extension.languageUnderTest)
 
