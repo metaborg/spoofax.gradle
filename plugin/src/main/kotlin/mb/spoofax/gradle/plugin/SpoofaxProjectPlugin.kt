@@ -53,14 +53,14 @@ class SpoofaxProjectPlugin : Plugin<Project> {
 
   private fun configureAfterEvaluate(project: Project, extension: SpoofaxProjectExtension, spoofaxInstance: SpoofaxInstance) {
     spoofaxInstance.run {
-      configureProjectAfterEvaluate(project, extension, spoofax, spoofaxMeta)
-      configureBuildTask(project, extension, spoofax, spoofaxMeta)
-      configureCleanTask(project, extension, spoofax, spoofaxMeta)
+      configureProjectAfterEvaluate(project, extension, spoofax)
+      configureBuildTask(project, extension, spoofax)
+      configureCleanTask(project, extension, spoofax)
       configureTestTask(project, extension, spoofax, spoofaxMeta, sptInjector)
     }
   }
 
-  private fun configureProjectAfterEvaluate(project: Project, extension: SpoofaxProjectExtension, spoofax: Spoofax, spoofaxMeta: SpoofaxMeta) {
+  private fun configureProjectAfterEvaluate(project: Project, extension: SpoofaxProjectExtension, spoofax: Spoofax) {
     // Override the metaborgVersion and language identifier in the configuration, with values from the extension.
     extension.overrideMetaborgVersion()
     extension.overrideIdentifiers()
@@ -70,7 +70,7 @@ class SpoofaxProjectPlugin : Plugin<Project> {
     extension.addDependenciesToProject(spoofaxProject.config())
   }
 
-  private fun configureBuildTask(project: Project, extension: SpoofaxProjectExtension, spoofax: Spoofax, spoofaxMeta: SpoofaxMeta) {
+  private fun configureBuildTask(project: Project, extension: SpoofaxProjectExtension, spoofax: Spoofax) {
     val languageFiles = project.languageFiles
     val task = project.tasks.registerSpoofaxBuildTask(spoofax, { spoofax.getProject(project) }, "spoofaxBuild")
     task.configure {
@@ -98,7 +98,7 @@ class SpoofaxProjectPlugin : Plugin<Project> {
     }
   }
 
-  private fun configureCleanTask(project: Project, extension: SpoofaxProjectExtension, spoofax: Spoofax, spoofaxMeta: SpoofaxMeta) {
+  private fun configureCleanTask(project: Project, extension: SpoofaxProjectExtension, spoofax: Spoofax) {
     val spoofaxProject = spoofax.getProject(project)
     val languageFiles = project.languageFiles
     val task = project.tasks.registerSpoofaxCleanTask(spoofax, spoofaxProject)
