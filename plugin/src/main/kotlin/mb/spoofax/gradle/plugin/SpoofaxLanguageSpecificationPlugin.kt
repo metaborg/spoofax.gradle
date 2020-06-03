@@ -99,8 +99,13 @@ class SpoofaxLanguageSpecificationPlugin : Plugin<Project> {
       }
     }
 
-    // Disable Java's JAR task, as we build our own JAR file.
+    // HACK: disable several parts of the Java plugin that are not needed.
     project.tasks.getByName(JavaPlugin.JAR_TASK_NAME).enabled = false
+    project.components.remove(project.components.getByName("java"))
+    project.configurations.getByName(JavaPlugin.API_ELEMENTS_CONFIGURATION_NAME).outgoing.artifacts.clear()
+    @Suppress("DEPRECATION")
+    project.configurations.getByName(JavaPlugin.RUNTIME_CONFIGURATION_NAME).outgoing.artifacts.clear()
+    project.configurations.getByName(JavaPlugin.RUNTIME_ELEMENTS_CONFIGURATION_NAME).outgoing.artifacts.clear()
   }
 
   private fun configureAfterEvaluate(
@@ -533,7 +538,7 @@ class SpoofaxLanguageSpecificationPlugin : Plugin<Project> {
       }
     }
   }
-  
+
 
   private fun configureCleanTask(
     project: Project,

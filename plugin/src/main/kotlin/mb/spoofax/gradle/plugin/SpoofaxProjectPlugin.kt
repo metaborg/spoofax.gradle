@@ -22,7 +22,6 @@ import org.gradle.kotlin.dsl.*
 import org.gradle.language.base.plugins.LifecycleBasePlugin
 import org.metaborg.core.language.LanguageIdentifier
 import org.metaborg.spoofax.core.Spoofax
-import org.metaborg.spoofax.meta.core.SpoofaxMeta
 
 @Suppress("unused")
 open class SpoofaxProjectExtension(project: Project) : SpoofaxExtensionBase(project) {
@@ -56,7 +55,7 @@ class SpoofaxProjectPlugin : Plugin<Project> {
       configureProjectAfterEvaluate(project, extension, spoofax)
       configureBuildTask(project, extension, spoofax)
       configureCleanTask(project, extension, spoofax)
-      configureTestTask(project, extension, spoofax, spoofaxMeta, sptInjector)
+      configureTestTask(project, extension, spoofax, sptInjector)
     }
   }
 
@@ -122,7 +121,6 @@ class SpoofaxProjectPlugin : Plugin<Project> {
     project: Project,
     extension: SpoofaxProjectExtension,
     spoofax: Spoofax,
-    spoofaxMeta: SpoofaxMeta,
     sptInjector: Injector
   ) {
     val spoofaxProject = spoofax.getProject(project)
