@@ -72,7 +72,7 @@ class SpoofaxLanguageSpecificationPlugin : Plugin<Project> {
     val extension = SpoofaxLangSpecExtension(project)
     project.extensions.add("spoofaxLanguageSpecification", extension)
 
-    configureProject(project)
+    configureJava(project)
 
     project.afterEvaluate {
       configureAfterEvaluate(this, extension, instance)
@@ -83,7 +83,7 @@ class SpoofaxLanguageSpecificationPlugin : Plugin<Project> {
     }
   }
 
-  private fun configureProject(project: Project) {
+  private fun configureJava(project: Project) {
     // Configure Java source and output directories.
     project.configure<SourceSetContainer> {
       val mainSourceSet = getByName(SourceSet.MAIN_SOURCE_SET_NAME)
@@ -99,8 +99,12 @@ class SpoofaxLanguageSpecificationPlugin : Plugin<Project> {
       }
     }
 
-    // Disable Java's JAR task, as we build our own JAR file.
+    // HACK: disable several parts of the Java plugin that are not needed.
     project.tasks.getByName(JavaPlugin.JAR_TASK_NAME).enabled = false
+    project.components.remove(project.components.getByName("java"))
+    project.configurations.getByName(JavaPlugin.API_ELEMENTS_CONFIGURATION_NAME).outgoing.artifacts.clear()
+    project.configurations.getByName(@Suppress("DEPRECATION") JavaPlugin.RUNTIME_CONFIGURATION_NAME).outgoing.artifacts.clear()
+    project.configurations.getByName(JavaPlugin.RUNTIME_ELEMENTS_CONFIGURATION_NAME).outgoing.artifacts.clear()
   }
 
   private fun configureAfterEvaluate(
@@ -533,7 +537,7 @@ class SpoofaxLanguageSpecificationPlugin : Plugin<Project> {
       }
     }
   }
-  
+
 
   private fun configureCleanTask(
     project: Project,

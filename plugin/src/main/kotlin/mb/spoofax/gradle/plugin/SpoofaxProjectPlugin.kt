@@ -22,7 +22,6 @@ import org.gradle.kotlin.dsl.*
 import org.gradle.language.base.plugins.LifecycleBasePlugin
 import org.metaborg.core.language.LanguageIdentifier
 import org.metaborg.spoofax.core.Spoofax
-import org.metaborg.spoofax.meta.core.SpoofaxMeta
 
 @Suppress("unused")
 open class SpoofaxProjectExtension(project: Project) : SpoofaxExtensionBase(project) {
@@ -53,14 +52,14 @@ class SpoofaxProjectPlugin : Plugin<Project> {
 
   private fun configureAfterEvaluate(project: Project, extension: SpoofaxProjectExtension, spoofaxInstance: SpoofaxInstance) {
     spoofaxInstance.run {
-      configureProjectAfterEvaluate(project, extension, spoofax, spoofaxMeta)
-      configureBuildTask(project, extension, spoofax, spoofaxMeta)
-      configureCleanTask(project, extension, spoofax, spoofaxMeta)
-      configureTestTask(project, extension, spoofax, spoofaxMeta, sptInjector)
+      configureProjectAfterEvaluate(project, extension, spoofax)
+      configureBuildTask(project, extension, spoofax)
+      configureCleanTask(project, extension, spoofax)
+      configureTestTask(project, extension, spoofax, sptInjector)
     }
   }
 
-  private fun configureProjectAfterEvaluate(project: Project, extension: SpoofaxProjectExtension, spoofax: Spoofax, spoofaxMeta: SpoofaxMeta) {
+  private fun configureProjectAfterEvaluate(project: Project, extension: SpoofaxProjectExtension, spoofax: Spoofax) {
     // Override the metaborgVersion and language identifier in the configuration, with values from the extension.
     extension.overrideMetaborgVersion()
     extension.overrideIdentifiers()
@@ -70,7 +69,7 @@ class SpoofaxProjectPlugin : Plugin<Project> {
     extension.addDependenciesToProject(spoofaxProject.config())
   }
 
-  private fun configureBuildTask(project: Project, extension: SpoofaxProjectExtension, spoofax: Spoofax, spoofaxMeta: SpoofaxMeta) {
+  private fun configureBuildTask(project: Project, extension: SpoofaxProjectExtension, spoofax: Spoofax) {
     val languageFiles = project.languageFiles
     val task = project.tasks.registerSpoofaxBuildTask(spoofax, { spoofax.getProject(project) }, "spoofaxBuild")
     task.configure {
@@ -98,11 +97,12 @@ class SpoofaxProjectPlugin : Plugin<Project> {
     }
   }
 
-  private fun configureCleanTask(project: Project, extension: SpoofaxProjectExtension, spoofax: Spoofax, spoofaxMeta: SpoofaxMeta) {
+  private fun configureCleanTask(project: Project, extension: SpoofaxProjectExtension, spoofax: Spoofax) {
     val spoofaxProject = spoofax.getProject(project)
     val languageFiles = project.languageFiles
     val task = project.tasks.registerSpoofaxCleanTask(spoofax, spoofaxProject)
     task.configure {
+      // Task dependencies:
       // 1. Language files, which influences which languages are loaded.
       dependsOn(languageFiles)
       inputs.files({ languageFiles }) // Closure to defer to task execution time.
@@ -122,13 +122,17 @@ class SpoofaxProjectPlugin : Plugin<Project> {
     project: Project,
     extension: SpoofaxProjectExtension,
     spoofax: Spoofax,
-    spoofaxMeta: SpoofaxMeta,
     sptInjector: Injector
   ) {
     val spoofaxProject = spoofax.getProject(project)
     val languageFiles = project.languageFiles
     val task = project.tasks.registerSpoofaxTestTask(spoofax, sptInjector, { spoofax.getProject(project) })
     task.configure {
+      // Task dependencies:
+      // 1. Language files, which influences which languages are loaded.
+      dependsOn(languageFiles)
+      inputs.files({ languageFiles }) // Closure to defer to task execution time.
+
       // Test the specified language under test.
       languageUnderTest.set(extension.languageUnderTest)
 

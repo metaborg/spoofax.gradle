@@ -19,7 +19,6 @@ import org.gradle.kotlin.dsl.*
 import org.gradle.language.base.plugins.LifecycleBasePlugin
 import org.metaborg.core.language.LanguageIdentifier
 import org.metaborg.spoofax.core.Spoofax
-import org.metaborg.spoofax.meta.core.SpoofaxMeta
 
 @Suppress("unused")
 open class SpoofaxTestExtension(project: Project) : SpoofaxExtensionBase(project) {
@@ -50,12 +49,12 @@ class SpoofaxTestPlugin : Plugin<Project> {
 
   private fun configureAfterEvaluate(project: Project, extension: SpoofaxTestExtension, spoofaxInstance: SpoofaxInstance) {
     spoofaxInstance.run {
-      configureProjectAfterEvaluate(project, extension, spoofax, spoofaxMeta)
-      configureTestTask(project, extension, spoofax, spoofaxMeta, sptInjector)
+      configureProjectAfterEvaluate(project, extension, spoofax)
+      configureTestTask(project, extension, spoofax, sptInjector)
     }
   }
 
-  private fun configureProjectAfterEvaluate(project: Project, extension: SpoofaxTestExtension, spoofax: Spoofax, spoofaxMeta: SpoofaxMeta) {
+  private fun configureProjectAfterEvaluate(project: Project, extension: SpoofaxTestExtension, spoofax: Spoofax) {
     // Check if languageUnderTest property was set
     extension.languageUnderTest.finalizeValue()
     if(!extension.languageUnderTest.isPresent) {
@@ -75,13 +74,17 @@ class SpoofaxTestPlugin : Plugin<Project> {
     project: Project,
     extension: SpoofaxTestExtension,
     spoofax: Spoofax,
-    spoofaxMeta: SpoofaxMeta,
     sptInjector: Injector
   ) {
     val spoofaxProject = spoofax.getProject(project)
     val languageFiles = project.languageFiles
     val task = project.tasks.registerSpoofaxTestTask(spoofax, sptInjector, { spoofax.getProject(project) })
     task.configure {
+      // Task dependencies:
+      // 1. Language files, which influences which languages are loaded.
+      dependsOn(languageFiles)
+      inputs.files({ languageFiles }) // Closure to defer to task execution time.
+
       // Test the specified language under test.
       languageUnderTest.set(extension.languageUnderTest)
 
