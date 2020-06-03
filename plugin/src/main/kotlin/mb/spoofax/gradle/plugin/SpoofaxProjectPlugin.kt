@@ -102,6 +102,7 @@ class SpoofaxProjectPlugin : Plugin<Project> {
     val languageFiles = project.languageFiles
     val task = project.tasks.registerSpoofaxCleanTask(spoofax, spoofaxProject)
     task.configure {
+      // Task dependencies:
       // 1. Language files, which influences which languages are loaded.
       dependsOn(languageFiles)
       inputs.files({ languageFiles }) // Closure to defer to task execution time.
@@ -127,6 +128,11 @@ class SpoofaxProjectPlugin : Plugin<Project> {
     val languageFiles = project.languageFiles
     val task = project.tasks.registerSpoofaxTestTask(spoofax, sptInjector, { spoofax.getProject(project) })
     task.configure {
+      // Task dependencies:
+      // 1. Language files, which influences which languages are loaded.
+      dependsOn(languageFiles)
+      inputs.files({ languageFiles }) // Closure to defer to task execution time.
+
       // Test the specified language under test.
       languageUnderTest.set(extension.languageUnderTest)
 

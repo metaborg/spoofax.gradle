@@ -20,6 +20,7 @@ jobs:
             experimental: true
     runs-on: ${{ matrix.os }}
     continue-on-error: ${{ matrix.experimental }}
+    timeout-minutes: 10 # Timeout in 10 minutes, as Stratego initialization can sometimes deadlock
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-java@v1
