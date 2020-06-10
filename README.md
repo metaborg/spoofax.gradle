@@ -33,7 +33,7 @@ The following table lists the supported versions:
 
 | Spoofax Gradle Plugin | Spoofax |
 |-----------------------|---------|
-| 0.3.6                 | 2.5.9   |
+| 0.3.6-0.3.7           | 2.5.9   |
 
 ## Building and testing a language specification
 
@@ -41,7 +41,7 @@ Apply the langspec plugin to a project (a build.gradle(.kts) file) as follows:
 
 ```kotlin
 plugins {
-  id("org.metaborg.spoofax.gradle.langspec") version("0.3.6")
+  id("org.metaborg.spoofax.gradle.langspec") version("0.3.7")
 }
 ```
 
@@ -112,7 +112,7 @@ Apply the project plugin to a project (a build.gradle(.kts) file) as follows:
 
 ```kotlin
 plugins {
-  id("org.metaborg.spoofax.gradle.project") version("0.3.6")
+  id("org.metaborg.spoofax.gradle.project") version("0.3.7")
 }
 ```
 
@@ -131,7 +131,7 @@ Apply the test plugin to a project (a build.gradle(.kts) file) as follows:
 
 ```kotlin
 plugins {
-  id("org.metaborg.spoofax.gradle.test") version("0.3.6")
+  id("org.metaborg.spoofax.gradle.test") version("0.3.7")
 }
 ```
 
