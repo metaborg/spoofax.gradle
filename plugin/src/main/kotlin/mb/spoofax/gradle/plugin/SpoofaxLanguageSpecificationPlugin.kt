@@ -40,7 +40,6 @@ import org.metaborg.spoofax.meta.core.config.StrategoFormat
 import java.io.File
 import java.io.IOException
 
-
 open class SpoofaxLangSpecExtension(project: Project) : SpoofaxExtensionBase(project) {
   val strategoFormat: Property<StrategoFormat> = project.objects.property()
   val createPublication: Property<Boolean> = project.objects.property()
