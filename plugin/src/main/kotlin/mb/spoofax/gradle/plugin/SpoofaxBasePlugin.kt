@@ -131,9 +131,7 @@ open class SpoofaxBasePlugin @Inject constructor(
 
     // Create a spoofax-language software component.
     val spoofaxLanguageComponent = softwareComponentFactory.adhoc(spoofaxLanguageComponent)
-    spoofaxLanguageComponent.addVariantsFromConfiguration(languageArchive) {
-      skip() // No transitive dependencies, so we can skip everything.
-    }
+    spoofaxLanguageComponent.addVariantsFromConfiguration(languageArchive) {}
     project.components.add(spoofaxLanguageComponent)
   }
 }
