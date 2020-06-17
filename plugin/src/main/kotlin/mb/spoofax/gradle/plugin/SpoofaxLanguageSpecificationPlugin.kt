@@ -137,8 +137,7 @@ class SpoofaxLanguageSpecificationPlugin : Plugin<Project> {
     }
 
     // Add dependencies to corresponding configurations.
-    val languageSpecification = spoofaxMeta.getLanguageSpecification(project)
-    extension.addDependenciesToProject(languageSpecification.config())
+    extension.addDependenciesToProject(spoofaxMeta.getLanguageSpecification(project).config())
 
     // Add a dependency to Spoofax core.
     extension.addSpoofaxCoreDependency()

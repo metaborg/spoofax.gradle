@@ -16,6 +16,7 @@ import org.metaborg.core.config.LanguageComponentConfig
 import org.metaborg.core.config.LanguageComponentConfigBuilder
 import org.metaborg.core.config.LanguageComponentConfigService
 import org.metaborg.core.config.ProjectConfig
+import org.metaborg.core.language.LanguageContributionIdentifier
 import org.metaborg.core.language.LanguageIdentifier
 import org.metaborg.core.language.LanguageVersion
 import org.metaborg.core.messages.MessageBuilder
@@ -46,11 +47,18 @@ data class ConfigOverride(
       config.setProperty("metaborgVersion", metaborgVersion)
     }
     if(languageComponentConfig != null) {
-      val identifier = run {
-        val identifier = languageComponentConfig.identifier()
-        LanguageIdentifier(groupId ?: identifier.groupId, id ?: identifier.id, version ?: identifier.version)
-      }
-      config.setProperty("id", identifier)
+      val originalIdentifier = languageComponentConfig.identifier()
+      val newIdentifier = LanguageIdentifier(groupId ?: originalIdentifier.groupId, id ?: originalIdentifier.id, version
+        ?: originalIdentifier.version)
+      config.setProperty("id", newIdentifier)
+
+      config.setProperty("contributions", languageComponentConfig.langContribs().map {
+        if(it.id == originalIdentifier) {
+          LanguageContributionIdentifier(newIdentifier, it.name)
+        } else {
+          it
+        }
+      }.toMutableList())
     }
     if(!compileDeps.isEmpty()) {
       config.setProperty("dependencies.compile", compileDeps)

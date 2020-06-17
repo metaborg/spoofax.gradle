@@ -77,7 +77,10 @@ open class SpoofaxTestTask @Inject constructor(
     val sptLangImpl = languageService.getImpl(SpoofaxBasePlugin.sptId)
       ?: throw GradleException("Failed to get SPT language implementation (${SpoofaxBasePlugin.sptId})")
     languageUnderTest.finalizeValue()
-    val langUnderTest = languageService.getImpl(languageUnderTest.get())
+    val languageUnderTestId = languageUnderTest.get()
+    val langUnderTest = languageService.getImpl(languageUnderTestId)
+      ?: languageService.getComponent(languageUnderTestId)?.contributesTo()?.firstOrNull() // HACK: attempt to get language component instead, and get the first language it contributes to.
+      ?: throw GradleException("Failed to get language implementation or component under test with ID '${languageUnderTestId}'; it does not exist")
     val spoofaxProject = spoofaxProjectSupplier()
     try {
       sptRunner.test(spoofaxProject, sptLangImpl, langUnderTest)
