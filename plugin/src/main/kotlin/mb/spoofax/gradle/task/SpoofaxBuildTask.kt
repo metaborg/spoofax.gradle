@@ -18,7 +18,10 @@ import org.metaborg.spoofax.core.Spoofax
 import org.metaborg.spoofax.core.build.ISpoofaxBuilder
 import org.metaborg.spoofax.core.resource.SpoofaxIgnoresSelector
 import java.io.OutputStream
+import java.util.concurrent.locks.Lock
+import java.util.concurrent.locks.ReentrantLock
 import javax.inject.Inject
+import kotlin.concurrent.withLock
 
 fun TaskContainer.registerSpoofaxBuildTask(
   spoofax: Spoofax,
@@ -43,6 +46,12 @@ open class SpoofaxBuildTask @Inject constructor(
   private val builder: ISpoofaxBuilder,
   private val spoofaxProjectSupplier: () -> IProject
 ) : DefaultTask() {
+  companion object {
+    // Single static lock to prevent concurrent Spoofax builds. Concurrent builds are not possible because that causes
+    // concurrent Stratego runtime initialization, which can then deadlock.
+    private val lock: Lock = ReentrantLock()
+  }
+
   private val languageIds: MutableList<LanguageIdentifier> = mutableListOf()
   private val pardonedLanguages: MutableList<String> = mutableListOf()
 
@@ -89,7 +98,7 @@ open class SpoofaxBuildTask @Inject constructor(
       addTransformGoal(CompileGoal())
     }
     val buildInput = inputBuilder.build(dependencyService, languagePathService)
-    val output = builder.build(buildInput)
+    val output = lock.withLock { builder.build(buildInput) }
     if(!output.success()) {
       throw GradleException("Spoofax build failed; errors encountered")
     }
