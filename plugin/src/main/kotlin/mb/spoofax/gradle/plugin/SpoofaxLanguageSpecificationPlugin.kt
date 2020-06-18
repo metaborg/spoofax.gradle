@@ -258,13 +258,17 @@ class SpoofaxLanguageSpecificationPlugin : Plugin<Project> {
       mustRunAfter(buildTask)
       // 4. Extension properties
       inputs.property("approximateDependencies", extension.approximateDependencies)
+      // 5. Gradle group/name/version influences the `metaborg.component.yaml` fike.
+      inputs.property("group", project.group.toString())
+      inputs.property("name", project.name)
+      inputs.property("version", project.version.toString())
       // General inputs:
       if(extension.approximateDependencies.get()) {
         // Approximate inputs/outputs:
         // * `metaborg.yaml` config file
         inputs.file(projectDir.resolve("metaborg.yaml"))
         // Outputs:
-        // * generated `metaborg.component.yaml file
+        // * generated `metaborg.component.yaml` file
         outputs.file(metaborgComponentYaml)
         // * generated completion file
         outputs.file(srcGenDir.resolve("completion/completion.str"))
