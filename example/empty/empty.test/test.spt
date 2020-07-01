@@ -2,6 +2,6 @@ module test
 
 language empty
 
-test parse [[]] parse succeeds
-test parse [[         ]] parse succeeds
-test parse [[not empty]] parse fails
+test parse 1 [[]] parse succeeds
+test parse 2 [[         ]] parse ambiguous
+test parse 3 [[not empty]] parse fails
