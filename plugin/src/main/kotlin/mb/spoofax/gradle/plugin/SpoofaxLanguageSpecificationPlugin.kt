@@ -352,7 +352,7 @@ class SpoofaxLanguageSpecificationPlugin : Plugin<Project> {
           StrategoFormat.jar -> outputs.dir(srcGenDir.resolve("stratego-java"))
           StrategoFormat.ctree -> outputs.file(targetMetaborgDir.resolve("stratego.ctree"))
         }
-        outputs.file(targetMetaborgDir.resolve("typesmart.context"))
+        //outputs.file(targetMetaborgDir.resolve("typesmart.context"))
         // TODO: Stratego include files and paths that are not in the project directory.
       } else {
         // Conservative inputs: any file in the project directory.
@@ -418,8 +418,6 @@ class SpoofaxLanguageSpecificationPlugin : Plugin<Project> {
           // - Stratego JAR file.
           outputs.file(targetMetaborgDir.resolve("stratego.jar"))
         }
-        // * Stratego Java strategies JAR file. Optional because it may not exist if there are no Java strategies.
-        outputs.file(targetMetaborgDir.resolve("stratego-javastrat.jar")).optional()
       } else {
         // Conservative inputs: any file in the project directory.
         inputs.dir(projectDir)
