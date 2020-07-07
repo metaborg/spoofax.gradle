@@ -19,9 +19,9 @@ dependencies {
   org.metaborg.spoofax.meta.core depends on a version of PIE which depends on version 0.4.0 of org.metaborg:resource.
   Due to an issue in Gradle, the first version of resource that is loaded will be used by code in plugins that react to
   certain Gradle events, such as Project#afterEvaluate. Since version 0.4.0 does not have certain API, this will fail.
-  Therefore, we force the version to 0.7.1.
+  Therefore, we force the version to 0.7.3.
   */
-  api("org.metaborg:resource:0.7.1")
+  api("org.metaborg:resource:0.7.3")
 }
 
 gradlePlugin {
