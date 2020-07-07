@@ -258,13 +258,17 @@ class SpoofaxLanguageSpecificationPlugin : Plugin<Project> {
       mustRunAfter(buildTask)
       // 4. Extension properties
       inputs.property("approximateDependencies", extension.approximateDependencies)
+      // 5. Gradle group/name/version influences the `metaborg.component.yaml` fike.
+      inputs.property("group", project.group.toString())
+      inputs.property("name", project.name)
+      inputs.property("version", project.version.toString())
       // General inputs:
       if(extension.approximateDependencies.get()) {
         // Approximate inputs/outputs:
         // * `metaborg.yaml` config file
         inputs.file(projectDir.resolve("metaborg.yaml"))
         // Outputs:
-        // * generated `metaborg.component.yaml file
+        // * generated `metaborg.component.yaml` file
         outputs.file(metaborgComponentYaml)
         // * generated completion file
         outputs.file(srcGenDir.resolve("completion/completion.str"))
@@ -348,7 +352,7 @@ class SpoofaxLanguageSpecificationPlugin : Plugin<Project> {
           StrategoFormat.jar -> outputs.dir(srcGenDir.resolve("stratego-java"))
           StrategoFormat.ctree -> outputs.file(targetMetaborgDir.resolve("stratego.ctree"))
         }
-        outputs.file(targetMetaborgDir.resolve("typesmart.context"))
+        //outputs.file(targetMetaborgDir.resolve("typesmart.context"))
         // TODO: Stratego include files and paths that are not in the project directory.
       } else {
         // Conservative inputs: any file in the project directory.
@@ -414,8 +418,6 @@ class SpoofaxLanguageSpecificationPlugin : Plugin<Project> {
           // - Stratego JAR file.
           outputs.file(targetMetaborgDir.resolve("stratego.jar"))
         }
-        // * Stratego Java strategies JAR file. Optional because it may not exist if there are no Java strategies.
-        outputs.file(targetMetaborgDir.resolve("stratego-javastrat.jar")).optional()
       } else {
         // Conservative inputs: any file in the project directory.
         inputs.dir(projectDir)
