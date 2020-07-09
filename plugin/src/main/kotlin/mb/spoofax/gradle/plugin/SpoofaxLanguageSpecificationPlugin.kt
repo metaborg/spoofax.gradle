@@ -25,6 +25,7 @@ import org.gradle.api.Project
 import org.gradle.api.plugins.JavaLibraryPlugin
 import org.gradle.api.plugins.JavaPlugin
 import org.gradle.api.provider.Property
+import org.gradle.api.provider.SetProperty
 import org.gradle.api.publish.PublishingExtension
 import org.gradle.api.publish.maven.MavenPublication
 import org.gradle.api.tasks.SourceSet
@@ -40,20 +41,45 @@ import org.metaborg.spoofax.meta.core.config.StrategoFormat
 import java.io.File
 import java.io.IOException
 
+@Suppress("UnstableApiUsage")
 open class SpoofaxLangSpecExtension(project: Project) : SpoofaxExtensionBase(project) {
   val strategoFormat: Property<StrategoFormat> = project.objects.property()
   val createPublication: Property<Boolean> = project.objects.property()
   val buildExamples: Property<Boolean> = project.objects.property()
   val examplesDir: Property<String> = project.objects.property()
   val runTests: Property<Boolean> = project.objects.property()
-  val approximateDependencies: Property<Boolean> = project.objects.property()
+
+  val defaultInputExcludePatterns: SetProperty<String> = project.objects.setProperty()
+  val defaultOutputExcludePatterns: SetProperty<String> = project.objects.setProperty()
+
+  val spoofaxBuildApproximateDependencies: Property<Boolean> = project.objects.property()
+  val spoofaxBuildConservativeInputIncludePatterns: SetProperty<String> = project.objects.setProperty()
+  val spoofaxBuildConservativeInputExcludePatterns: SetProperty<String> = project.objects.setProperty()
+  val spoofaxBuildConservativeOutputIncludePatterns: SetProperty<String> = project.objects.setProperty()
+  val spoofaxBuildConservativeOutputExcludePatterns: SetProperty<String> = project.objects.setProperty()
+
+  val otherApproximateDependencies: Property<Boolean> = project.objects.property()
 
   init {
     createPublication.convention(true)
     buildExamples.convention(false)
     examplesDir.convention("example")
     runTests.convention(true)
-    approximateDependencies.convention(true)
+
+    val sharedExcludes = setOf("/out", "/bin", "/.gradle", "/.git")
+    val sharedInputExcludes = setOf("/target", "/build") + sharedExcludes
+    val sharedOutputExcludes = sharedExcludes
+
+    defaultInputExcludePatterns.convention(sharedInputExcludes)
+    defaultOutputExcludePatterns.convention(sharedOutputExcludes)
+
+    spoofaxBuildApproximateDependencies.convention(true)
+    spoofaxBuildConservativeInputIncludePatterns.convention(setOf())
+    spoofaxBuildConservativeInputExcludePatterns.convention(sharedInputExcludes)
+    spoofaxBuildConservativeOutputIncludePatterns.convention(setOf())
+    spoofaxBuildConservativeOutputExcludePatterns.convention(sharedOutputExcludes)
+
+    otherApproximateDependencies.convention(true)
   }
 }
 
@@ -156,9 +182,6 @@ class SpoofaxLanguageSpecificationPlugin : Plugin<Project> {
         }
       }
     }
-
-    // Finalize common properties
-    extension.approximateDependencies.finalizeValue()
   }
 
   private fun configureBuildTask(
@@ -181,17 +204,18 @@ class SpoofaxLanguageSpecificationPlugin : Plugin<Project> {
       inputs.files({ languageFiles }) // Closure to defer to task execution time.
       // 2. Extension properties
       inputs.property("strategoFormat", extension.strategoFormat).optional(true)
-      inputs.property("approximateDependencies", extension.approximateDependencies)
+      inputs.property("approximateSpoofaxBuildDependencies", extension.spoofaxBuildApproximateDependencies)
       // TODO: Stratego dialects through *.tbl files in non-output directories
       // General inputs:
-      if(extension.approximateDependencies.get()) {
+      if(extension.spoofaxBuildApproximateDependencies.get()) {
         // Approximate inputs:
         // * `metaborg.yaml` config file
         inputs.file(projectDir.resolve("metaborg.yaml"))
         // * meta-language files
         inputs.files(project.fileTree(".") {
           include("**/*.esv", "**/*.sdf", "**/*.def", "**/*.sdf3", "**/*.nabl", "**/*.ts", "**/*.nabl2", "**/*.stx", "**/*.ds")
-          exclude("/src-gen", "/target", "/build", "/.gradle", "/.git")
+          exclude("/src-gen")
+          exclude(*extension.defaultInputExcludePatterns.get().toTypedArray())
         })
         // TODO: included files that are not in the project directory.
         // Approximate outputs:
@@ -212,10 +236,16 @@ class SpoofaxLanguageSpecificationPlugin : Plugin<Project> {
         outputs.dir(srcGenDir.resolve("statix"))
         // * TODO: dynsem
       } else {
-        // Conservative inputs: any file in the project directory.
-        inputs.dir(projectDir)
-        // Conservative outputs: any file in the project directory.
-        outputs.dir(projectDir)
+        // Conservative inputs: any file in the project directory, with matching include and exclude patterns.
+        inputs.files(project.fileTree(".") {
+          include(*extension.spoofaxBuildConservativeInputIncludePatterns.get().toTypedArray())
+          exclude(*extension.spoofaxBuildConservativeInputExcludePatterns.get().toTypedArray())
+        })
+        // Conservative outputs: any file in the project directory, with matching include and exclude patterns.
+        outputs.files(project.fileTree(".") {
+          include(*extension.spoofaxBuildConservativeOutputIncludePatterns.get().toTypedArray())
+          exclude(*extension.spoofaxBuildConservativeOutputExcludePatterns.get().toTypedArray())
+        })
       }
 
       languageSpecification.config().pardonedLanguages().forEach {
@@ -257,13 +287,13 @@ class SpoofaxLanguageSpecificationPlugin : Plugin<Project> {
       // 3. Must run after build task, because there may be custom generateSources build steps which require files to be built.
       mustRunAfter(buildTask)
       // 4. Extension properties
-      inputs.property("approximateDependencies", extension.approximateDependencies)
+      inputs.property("otherApproximateDependencies", extension.otherApproximateDependencies)
       // 5. Gradle group/name/version influences the `metaborg.component.yaml` fike.
       inputs.property("group", project.group.toString())
       inputs.property("name", project.name)
       inputs.property("version", project.version.toString())
       // General inputs:
-      if(extension.approximateDependencies.get()) {
+      if(extension.otherApproximateDependencies.get()) {
         // Approximate inputs/outputs:
         // * `metaborg.yaml` config file
         inputs.file(projectDir.resolve("metaborg.yaml"))
@@ -275,10 +305,14 @@ class SpoofaxLanguageSpecificationPlugin : Plugin<Project> {
         // * generated permissive normalized grammar
         outputs.file(srcGenDir.resolve("syntax/normalized/permissive-norm.aterm"))
       } else {
-        // Conservative inputs: Any file in the project directory.
-        inputs.dir(projectDir)
-        // Conservative outputs: any file in the project directory.
-        outputs.dir(projectDir)
+        // Conservative inputs: any file in the project directory (not matching include exclude patterns).
+        inputs.files(project.fileTree(".") {
+          exclude(*extension.defaultInputExcludePatterns.get().toTypedArray())
+        })
+        // Conservative outputs: any file in the project directory (not matching output exclude patterns).
+        outputs.files(project.fileTree(".") {
+          exclude(*extension.defaultOutputExcludePatterns.get().toTypedArray())
+        })
       }
 
       doFirst {
@@ -321,20 +355,20 @@ class SpoofaxLanguageSpecificationPlugin : Plugin<Project> {
       dependsOn(generateSourcesTask)
       // 4. Extension properties
       inputs.property("strategoFormat", extension.strategoFormat).optional(true)
-      inputs.property("approximateDependencies", extension.approximateDependencies)
+      inputs.property("otherApproximateDependencies", extension.otherApproximateDependencies)
       // General inputs:
-      if(extension.approximateDependencies.get()) {
+      if(extension.otherApproximateDependencies.get()) {
         // Approximate inputs/outputs:
         // * SDF
         // - old build and Stratego concrete syntax extensions
         inputs.files(project.fileTree(".") {
           include("**/*.sdf", "**/*.def")
-          exclude("/target", "/build", "/.gradle", "/.git")
+          exclude(*extension.defaultInputExcludePatterns.get().toTypedArray())
         })
         // - new build
         inputs.files(project.fileTree(".") {
           include("**/*-norm.aterm")
-          exclude("/target", "/build", "/.gradle", "/.git")
+          exclude(*extension.defaultInputExcludePatterns.get().toTypedArray())
         })
         outputs.file(targetMetaborgDir.resolve("table.bin"))
         outputs.file(targetMetaborgDir.resolve("table-completions.bin"))
@@ -346,19 +380,22 @@ class SpoofaxLanguageSpecificationPlugin : Plugin<Project> {
         // * Stratego
         inputs.files(project.fileTree(".") {
           include("**/*.str", "**/*.tbl", "**/*.pp.af")
-          exclude("/target", "/build", "/.gradle", "/.git")
+          exclude(*extension.defaultInputExcludePatterns.get().toTypedArray())
         })
         when(languageSpecification.config().strFormat()!!) {
           StrategoFormat.jar -> outputs.dir(srcGenDir.resolve("stratego-java"))
           StrategoFormat.ctree -> outputs.file(targetMetaborgDir.resolve("stratego.ctree"))
         }
-        //outputs.file(targetMetaborgDir.resolve("typesmart.context"))
         // TODO: Stratego include files and paths that are not in the project directory.
       } else {
-        // Conservative inputs: any file in the project directory.
-        inputs.dir(projectDir)
-        // Conservative outputs: any file in the project directory.
-        outputs.dir(projectDir)
+        // Conservative inputs: any file in the project directory (not matching include exclude patterns).
+        inputs.files(project.fileTree(".") {
+          exclude(*extension.defaultInputExcludePatterns.get().toTypedArray())
+        })
+        // Conservative outputs: any file in the project directory (not matching output exclude patterns).
+        outputs.files(project.fileTree(".") {
+          exclude(*extension.defaultOutputExcludePatterns.get().toTypedArray())
+        })
       }
 
       doFirst {
@@ -402,9 +439,9 @@ class SpoofaxLanguageSpecificationPlugin : Plugin<Project> {
       // 3. Java compile task, which provides class files that are packaged with this task.
       dependsOn(project.tasks.getByName(JavaPlugin.COMPILE_JAVA_TASK_NAME))
       // 4. Extension properties
-      inputs.property("approximateDependencies", extension.approximateDependencies)
+      inputs.property("otherApproximateDependencies", extension.otherApproximateDependencies)
       // General inputs:
-      if(extension.approximateDependencies.get()) {
+      if(extension.otherApproximateDependencies.get()) {
         // Approximate inputs/outputs:
         // * Stratego and Stratego Java strategies compiled class files.
         inputs.files(targetDir.resolve("classes"))
@@ -413,16 +450,19 @@ class SpoofaxLanguageSpecificationPlugin : Plugin<Project> {
           // - pp.af and .tbl files are included into the JAR file
           inputs.files(project.fileTree(".") {
             include("**/*.pp.af", "**/*.tbl")
-            exclude("/target", "/build", "/.gradle", "/.git")
+            exclude(*extension.defaultInputExcludePatterns.get().toTypedArray())
           })
-          // - Stratego JAR file.
-          outputs.file(targetMetaborgDir.resolve("stratego.jar"))
         }
+        outputs.file(targetMetaborgDir.resolve("stratego.jar"))
       } else {
-        // Conservative inputs: any file in the project directory.
-        inputs.dir(projectDir)
-        // Conservative outputs: any file in the project directory.
-        outputs.dir(projectDir)
+        // Conservative inputs: any file in the project directory (not matching include exclude patterns).
+        inputs.files(project.fileTree(".") {
+          exclude(*extension.defaultInputExcludePatterns.get().toTypedArray())
+        })
+        // Conservative outputs: any file in the project directory (not matching output exclude patterns).
+        outputs.files(project.fileTree(".") {
+          exclude(*extension.defaultOutputExcludePatterns.get().toTypedArray())
+        })
       }
 
       doFirst {
@@ -462,9 +502,9 @@ class SpoofaxLanguageSpecificationPlugin : Plugin<Project> {
       // 2. Package task, which provides files that are archived with this task.
       dependsOn(packageTask)
       // 3. Extension properties
-      inputs.property("approximateDependencies", extension.approximateDependencies)
+      inputs.property("approximateDependencies", extension.otherApproximateDependencies)
       // General inputs:
-      if(extension.approximateDependencies.get()) {
+      if(extension.otherApproximateDependencies.get()) {
         // Approximate inputs:
         // * icons
         val iconsDir = projectDir.resolve("icons")
@@ -477,8 +517,10 @@ class SpoofaxLanguageSpecificationPlugin : Plugin<Project> {
         inputs.file(metaborgComponentYaml)
         // TODO: exported files.
       } else {
-        // Conservative inputs: any file in the project directory.
-        inputs.dir(projectDir)
+        // Conservative inputs: any file in the project directory (not matching include exclude patterns).
+        inputs.files(project.fileTree(".") {
+          exclude(*extension.defaultInputExcludePatterns.get().toTypedArray())
+        })
       }
       // General outputs: the spoofax-language archive file.
       outputs.file(archiveFile)
