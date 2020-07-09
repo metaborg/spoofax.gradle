@@ -18,6 +18,7 @@ import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.plugins.JavaPlugin
 import org.gradle.api.provider.Property
+import org.gradle.api.provider.SetProperty
 import org.gradle.kotlin.dsl.*
 import org.gradle.language.base.plugins.LifecycleBasePlugin
 import org.metaborg.core.language.LanguageIdentifier
@@ -26,6 +27,18 @@ import org.metaborg.spoofax.core.Spoofax
 @Suppress("unused")
 open class SpoofaxProjectExtension(project: Project) : SpoofaxExtensionBase(project) {
   var languageUnderTest: Property<LanguageIdentifier> = project.objects.property()
+
+  val inputIncludePatterns: SetProperty<String> = project.objects.setProperty()
+  val inputExcludePatterns: SetProperty<String> = project.objects.setProperty()
+  val outputIncludePatterns: SetProperty<String> = project.objects.setProperty()
+  val outputExcludePatterns: SetProperty<String> = project.objects.setProperty()
+
+  init {
+    inputIncludePatterns.convention(setOf())
+    inputExcludePatterns.convention(setOf("/target", "/build", "/out", "/bin", "/.gradle", "/.git"))
+    outputIncludePatterns.convention(setOf())
+    outputExcludePatterns.convention(setOf("/out", "/bin", "/.gradle", "/.git"))
+  }
 }
 
 @Suppress("unused", "UnstableApiUsage")
@@ -79,9 +92,17 @@ class SpoofaxProjectPlugin : Plugin<Project> {
       inputs.files({ languageFiles }) // Closure to defer to task execution time.
       // TODO: Stratego dialects through *.tbl files in non-output directories
       // Inputs:
-      // * Any file in the project directory.
-      inputs.dir(project.projectDir)
-      // Outputs: none? TODO:
+      // * Any file in the project directory, with matching include and exclude patterns.
+      inputs.files(project.fileTree(".") {
+        include(*extension.inputIncludePatterns.get().toTypedArray())
+        exclude(*extension.inputExcludePatterns.get().toTypedArray())
+      })
+      // Outputs:
+      // * Any file in the project directory, with matching include and exclude patterns.
+      outputs.files(project.fileTree(".") {
+        include(*extension.outputIncludePatterns.get().toTypedArray())
+        exclude(*extension.outputExcludePatterns.get().toTypedArray())
+      })
 
       doFirst {
         // Requires configuration override, languages, and dialects to be loaded.
