@@ -141,7 +141,7 @@ class SpoofaxLanguageSpecificationPlugin : Plugin<Project> {
       val languageSpecification = spoofaxMeta.getLanguageSpecification(project)
       val languageSpecificationPaths = SpoofaxLangSpecCommonPaths(languageSpecification.location())
       val archiveLocation = languageSpecificationPaths.spxArchiveFile(languageSpecification.config().identifier().toFileString())
-      val archiveTask = configureArchiveTask(project, extension, spoofax, spoofaxMeta, packageTask, archiveLocation)
+      val archiveTask = configureArchiveTask(project, extension, spoofax, spoofaxMeta, generateSourcesTask, compileTask, packageTask, archiveLocation)
 
       configureCleanTask(project, extension, spoofax, spoofaxMeta)
       configureBuildExamplesTask(project, extension, spoofax, spoofaxMeta, archiveTask, archiveLocation)
@@ -483,6 +483,8 @@ class SpoofaxLanguageSpecificationPlugin : Plugin<Project> {
     extension: SpoofaxLangSpecExtension,
     spoofax: Spoofax,
     spoofaxMeta: SpoofaxMeta,
+    generateSourcesTask: TaskProvider<*>,
+    compileTask: TaskProvider<*>,
     packageTask: TaskProvider<*>,
     archiveLocation: FileObject
   ): TaskProvider<*> {
@@ -499,8 +501,8 @@ class SpoofaxLanguageSpecificationPlugin : Plugin<Project> {
       dependsOn(languageFiles)
       inputs.files({ languageFiles }) // Closure to defer to task execution time.
       // TODO: Stratego dialects through *.tbl files in non-output directories
-      // 2. Package task, which provides files that are archived with this task.
-      dependsOn(packageTask)
+      // 2. Generate sources/compile/package tasks, which provide files that are archived with this task.
+      dependsOn(generateSourcesTask, compileTask, packageTask)
       // 3. Extension properties
       inputs.property("approximateDependencies", extension.otherApproximateDependencies)
       // General inputs:
