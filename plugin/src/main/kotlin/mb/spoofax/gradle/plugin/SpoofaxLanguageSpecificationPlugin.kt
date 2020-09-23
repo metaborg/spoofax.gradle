@@ -493,7 +493,6 @@ class SpoofaxLanguageSpecificationPlugin : Plugin<Project> {
     val srcGenDir = projectDir.resolve("src-gen")
     val targetDir = projectDir.resolve("target")
     val targetMetaborgDir = targetDir.resolve("metaborg")
-    val metaborgComponentYaml = srcGenDir.resolve("metaborg.component.yaml")
     val languageFiles = project.languageFiles
     val archiveFile = spoofax.resourceService.localPath(archiveLocation)!!
     val task = project.tasks.register("spoofaxArchive") {
@@ -503,7 +502,7 @@ class SpoofaxLanguageSpecificationPlugin : Plugin<Project> {
       inputs.files({ languageFiles }) // Closure to defer to task execution time.
       // TODO: Stratego dialects through *.tbl files in non-output directories
       // 2. Spoofax build/generate sources/compile/package tasks, which provide files that are archived with this task.
-      dependsOn(buildTask,generateSourcesTask, compileTask, packageTask)
+      dependsOn(buildTask, generateSourcesTask, compileTask, packageTask)
       // 3. Extension properties
       inputs.property("approximateDependencies", extension.otherApproximateDependencies)
       // General inputs:
@@ -514,10 +513,10 @@ class SpoofaxLanguageSpecificationPlugin : Plugin<Project> {
         if(iconsDir.exists()) {
           inputs.dir(iconsDir)
         }
+        // * src-gen directory
+        inputs.dir(srcGenDir)
         // * target/metaborg directory
         inputs.dir(targetMetaborgDir)
-        // * generated `metaborg.component.yaml file
-        inputs.file(metaborgComponentYaml)
         // TODO: exported files.
       } else {
         // Conservative inputs: any file in the project directory (not matching include exclude patterns).
