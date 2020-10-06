@@ -1,9 +1,9 @@
 plugins {
-  id("org.metaborg.gradle.config.root-project") version "0.3.21"
-  id("org.metaborg.gradle.config.kotlin-gradle-plugin") version "0.3.21"
-  id("org.metaborg.gitonium") version "0.1.3"
-  kotlin("jvm") version "1.3.41" // Use 1.3.41 to keep in sync with embedded Kotlin version of Gradle 5.6.4.
-  `kotlin-dsl`
+  id("org.metaborg.gradle.config.root-project")// version "0.3.21"
+  id("org.metaborg.gradle.config.kotlin-gradle-plugin")// version "0.3.21"
+  id("org.metaborg.gitonium")// version "0.1.3"
+  kotlin("jvm")// version "1.3.41" // Use 1.3.41 to keep in sync with embedded Kotlin version of Gradle 5.6.4.
+  id("org.gradle.kotlin.kotlin-dsl")
 }
 
 metaborg {
@@ -11,7 +11,7 @@ metaborg {
   kotlinLanguageVersion = "1.2"
 }
 
-val spoofaxVersion = "2.5.11"
+val spoofaxVersion = "2.6.0-SNAPSHOT"
 dependencies {
   api("org.metaborg:org.metaborg.spoofax.meta.core:$spoofaxVersion")
   api("org.metaborg:org.metaborg.spt.core:$spoofaxVersion")
