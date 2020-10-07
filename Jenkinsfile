@@ -1,4 +1,9 @@
 #!groovy
 @Library('metaborg.jenkins.pipeline@develop') _
 
-gradlePipeline()
+gradlePipeline(
+  buildOtherBranch: false,
+  buildTag: false,
+  slack: true,
+  slackChannel: '#pie-dev'
+)
