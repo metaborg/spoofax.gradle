@@ -341,7 +341,6 @@ class SpoofaxLanguageSpecificationPlugin : Plugin<Project> {
     val srcGenDir = projectDir.resolve("src-gen")
     val targetDir = projectDir.resolve("target")
     val targetMetaborgDir = targetDir.resolve("metaborg")
-    val languageSpecification = spoofaxMeta.getLanguageSpecification(project)
     val languageFiles = project.languageFiles
     val task = project.tasks.register("spoofaxCompile") {
       // Task dependencies:
@@ -382,6 +381,7 @@ class SpoofaxLanguageSpecificationPlugin : Plugin<Project> {
           include("**/*.str", "**/*.tbl", "**/*.pp.af")
           exclude(*extension.defaultInputExcludePatterns.get().toTypedArray())
         })
+        val languageSpecification = spoofaxMeta.getLanguageSpecification(project)
         when(languageSpecification.config().strFormat()!!) {
           StrategoFormat.jar -> outputs.dir(srcGenDir.resolve("stratego-java"))
           StrategoFormat.ctree -> outputs.file(targetMetaborgDir.resolve("stratego.ctree"))
@@ -406,6 +406,7 @@ class SpoofaxLanguageSpecificationPlugin : Plugin<Project> {
       }
 
       doLast {
+        val languageSpecification = spoofaxMeta.getLanguageSpecification(project)
         spoofaxMeta.metaBuilder.compile(LanguageSpecBuildInput(languageSpecification))
 
         // Override Stratego provider again, as compile runs the ESV compiler again.
@@ -427,7 +428,6 @@ class SpoofaxLanguageSpecificationPlugin : Plugin<Project> {
     val targetDir = projectDir.resolve("target")
     val targetMetaborgDir = targetDir.resolve("metaborg")
     val languageFiles = project.languageFiles
-    val languageSpecification = spoofaxMeta.getLanguageSpecification(project)
     return project.tasks.register("spoofaxLangSpecPackage") {
       // Task dependencies:
       // 1. Language files, which influences which languages are loaded.
@@ -446,6 +446,7 @@ class SpoofaxLanguageSpecificationPlugin : Plugin<Project> {
         // * Stratego and Stratego Java strategies compiled class files.
         inputs.files(targetDir.resolve("classes"))
         // * Stratego JAR
+        val languageSpecification = spoofaxMeta.getLanguageSpecification(project)
         if(languageSpecification.config().strFormat() == StrategoFormat.jar) {
           // - pp.af and .tbl files are included into the JAR file
           inputs.files(project.fileTree(".") {
@@ -473,6 +474,7 @@ class SpoofaxLanguageSpecificationPlugin : Plugin<Project> {
       }
 
       doLast {
+        val languageSpecification = spoofaxMeta.getLanguageSpecification(project)
         spoofaxMeta.metaBuilder.pkg(LanguageSpecBuildInput(languageSpecification))
       }
     }
