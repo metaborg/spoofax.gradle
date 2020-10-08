@@ -35,7 +35,8 @@ The following table lists the supported versions:
 |-----------------------|---------|
 | 0.3.6-0.3.10          | 2.5.9   |
 | 0.4.0-0.4.1           | 2.5.10  |
-| 0.4.2-latest          | 2.5.11  |
+| 0.4.2-0.4.4           | 2.5.11  |
+| 0.4.5-latest          | 2.5.12  |
 
 ## Building and testing a language specification
 

@@ -1,14 +1,30 @@
 import java.util.Properties
 
-plugins {
-  id("org.metaborg.gradle.config.root-project")// version "0.3.21"
-  id("org.metaborg.gradle.config.kotlin-gradle-plugin")// version "0.3.21"
-  id("org.metaborg.gitonium")// version "0.1.3"
-  kotlin("jvm")// version "1.3.41" // Use 1.3.41 to keep in sync with embedded Kotlin version of Gradle 5.6.4.
-  id("org.gradle.kotlin.kotlin-dsl")
+buildscript {
+  if(gradle.parent?.rootProject?.name == "spoofax.gradle.root") { // If standalone build, put additional plugins on the classpath.
+    repositories {
+      maven("https://artifacts.metaborg.org/content/groups/public/")
+    }
+    dependencies {
+      classpath("org.metaborg:gradle.config:0.3.21")
+      classpath("org.metaborg:gitonium:0.1.3")
+    }
+  }
 }
 
-metaborg {
+plugins {
+  `java-gradle-plugin`
+  `kotlin-dsl`
+  `maven-publish`
+}
+
+val standaloneBuild = gradle.parent?.rootProject?.name == "spoofax.gradle.root"
+if(standaloneBuild) { // If standalone build, apply additional plugins.
+  apply(plugin = "org.metaborg.gradle.config.root-project")
+  apply(plugin = "org.metaborg.gitonium")
+}
+
+configure<mb.gradle.config.MetaborgExtension> {
   kotlinApiVersion = "1.2"
   kotlinLanguageVersion = "1.2"
 }
@@ -18,15 +34,17 @@ val spoofax2Version = try {
   project.ext["spoofax2Version"]!! // Set by Gradle project property (see gradle.properties).
 } catch(e: ExtraPropertiesExtension.UnknownPropertyException) {
   // Get spoofax2Version explicitly via gradle.properties, as project properties are not passed to included builds.
-  val propertiesFile = rootDir.resolve("../../../gradle.properties")
-  if(propertiesFile.exists() && propertiesFile.isFile) {
+  val path = if(standaloneBuild) "../gradle.properties" else "../../../gradle.properties"
+  val file = rootDir.resolve(path)
+  if(file.exists() && file.isFile) {
     val properties = Properties()
-    propertiesFile.inputStream().buffered().use { inputStream ->
+    file.inputStream().buffered().use { inputStream ->
       properties.load(inputStream)
     }
-    properties.getProperty("spoofax2Version")!!
+    properties.getProperty("spoofax2Version")
+      ?: throw GradleException("Cannot determine Spoofax 2 version: Gradle project property 'spoofax2Version' was not set (in this project's gradle.properties file), and was also not found in '$path'")
   } else {
-    null!!
+    throw GradleException("Cannot determine Spoofax 2 version: Gradle project property 'spoofax2Version' was not set (in this project's gradle.properties file), and Gradle properties file '$path' was also not found")
   }
 }
 
@@ -37,9 +55,9 @@ dependencies {
   org.metaborg.spoofax.meta.core depends on a version of PIE which depends on version 0.4.0 of org.metaborg:resource.
   Due to an issue in Gradle, the first version of resource that is loaded will be used by code in plugins that react to
   certain Gradle events, such as Project#afterEvaluate. Since version 0.4.0 does not have certain API, this will fail.
-  Therefore, we force the version to 0.7.3.
+  Therefore, we force the version to 0.8.1.
   */
-  api("org.metaborg:resource:0.7.3")
+  api("org.metaborg:resource:0.8.1")
 }
 
 gradlePlugin {
