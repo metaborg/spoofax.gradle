@@ -30,9 +30,10 @@ internal fun Spoofax.recreateProject(project: Project): IProject {
 }
 
 internal fun Spoofax.getProject(project: Project): IProject {
+  val projectService = (this.projectService as ISimpleProjectService)
   val projectLocation = getProjectLocation(project)
   return projectService.get(projectLocation)
-    ?: throw GradleException("Project at '$projectLocation' is not a Spoofax project")
+    ?: projectService.create(projectLocation)
 }
 
 internal fun SpoofaxMeta.getLanguageSpecification(project: Project): ISpoofaxLanguageSpec {
