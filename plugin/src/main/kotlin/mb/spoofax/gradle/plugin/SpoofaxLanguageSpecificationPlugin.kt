@@ -7,6 +7,7 @@ import mb.spoofax.gradle.task.registerSpoofaxCleanTask
 import mb.spoofax.gradle.task.registerSpoofaxTestTask
 import mb.spoofax.gradle.util.SpoofaxInstance
 import mb.spoofax.gradle.util.SpoofaxInstanceCache
+import mb.spoofax.gradle.util.configureSafely
 import mb.spoofax.gradle.util.getLanguageSpecification
 import mb.spoofax.gradle.util.getProject
 import mb.spoofax.gradle.util.getProjectLocation
@@ -18,6 +19,7 @@ import mb.spoofax.gradle.util.overrideIdentifiers
 import mb.spoofax.gradle.util.overrideMetaborgVersion
 import mb.spoofax.gradle.util.overrideStrategoFormat
 import mb.spoofax.gradle.util.recreateProject
+import mb.spoofax.gradle.util.registerSafely
 import org.apache.commons.vfs2.FileObject
 import org.gradle.api.GradleException
 import org.gradle.api.Plugin
@@ -130,29 +132,27 @@ class SpoofaxLanguageSpecificationPlugin : Plugin<Project> {
     extension: SpoofaxLangSpecExtension,
     spoofaxInstance: SpoofaxInstance
   ) {
-    spoofaxInstance.run {
-      configureProjectAfterEvaluate(project, extension, spoofaxMeta)
+    configureProjectAfterEvaluate(project, extension, spoofaxInstance)
 
-      val buildTask = configureBuildTask(project, extension, spoofax, spoofaxMeta)
-      val generateSourcesTask = configureGenerateSourcesTask(project, extension, spoofaxMeta, buildTask)
-      val compileTask = configureCompileTask(project, extension, spoofax, spoofaxMeta, buildTask, generateSourcesTask)
-      val packageTask = configurePackageTask(project, extension, spoofax, spoofaxMeta, compileTask)
+    val buildTask = configureBuildTask(project, extension, spoofaxInstance)
+    val generateSourcesTask = configureGenerateSourcesTask(project, extension, spoofaxInstance, buildTask)
+    val compileTask = configureCompileTask(project, extension, spoofaxInstance, buildTask, generateSourcesTask)
+    val packageTask = configurePackageTask(project, extension, spoofaxInstance, compileTask)
 
-      val languageSpecification = spoofaxMeta.getLanguageSpecification(project)
-      val languageSpecificationPaths = SpoofaxLangSpecCommonPaths(languageSpecification.location())
-      val archiveLocation = languageSpecificationPaths.spxArchiveFile(languageSpecification.config().identifier().toFileString())
-      val archiveTask = configureArchiveTask(project, extension, spoofax, spoofaxMeta, buildTask, generateSourcesTask, compileTask, packageTask, archiveLocation)
+    val languageSpecification = spoofaxInstance.spoofaxMeta.getLanguageSpecification(project)
+    val languageSpecificationPaths = SpoofaxLangSpecCommonPaths(languageSpecification.location())
+    val archiveLocation = languageSpecificationPaths.spxArchiveFile(languageSpecification.config().identifier().toFileString())
+    val archiveTask = configureArchiveTask(project, extension, spoofaxInstance, buildTask, generateSourcesTask, compileTask, packageTask, archiveLocation)
 
-      configureCleanTask(project, extension, spoofax, spoofaxMeta)
-      configureBuildExamplesTask(project, extension, spoofax, spoofaxMeta, archiveTask, archiveLocation)
-      configureTestTask(project, extension, spoofax, spoofaxMeta, sptInjector, archiveTask, archiveLocation)
-    }
+    configureCleanTask(project, extension, spoofaxInstance)
+    configureBuildExamplesTask(project, extension, spoofaxInstance, archiveTask, archiveLocation)
+    configureTestTask(project, extension, spoofaxInstance, archiveTask, archiveLocation)
   }
 
   private fun configureProjectAfterEvaluate(
     project: Project,
     extension: SpoofaxLangSpecExtension,
-    spoofaxMeta: SpoofaxMeta
+    spoofaxInstance: SpoofaxInstance
   ) {
     // Override the metaborgVersion, language identifier, and the Stratego format in the configuration, with values from the extension.
     extension.overrideMetaborgVersion()
@@ -163,7 +163,7 @@ class SpoofaxLanguageSpecificationPlugin : Plugin<Project> {
     }
 
     // Add dependencies to corresponding configurations.
-    extension.addDependenciesToProject(spoofaxMeta.getLanguageSpecification(project).config())
+    extension.addDependenciesToProject(spoofaxInstance.spoofaxMeta.getLanguageSpecification(project).config())
 
     // Add a dependency to Spoofax core.
     extension.addSpoofaxCoreDependency()
@@ -187,17 +187,15 @@ class SpoofaxLanguageSpecificationPlugin : Plugin<Project> {
   private fun configureBuildTask(
     project: Project,
     extension: SpoofaxLangSpecExtension,
-    spoofax: Spoofax,
-    spoofaxMeta: SpoofaxMeta
+    spoofaxInstance: SpoofaxInstance
   ): TaskProvider<SpoofaxBuildTask> {
     val projectDir = project.projectDir
     val srcGenDir = projectDir.resolve("src-gen")
     val targetDir = projectDir.resolve("target")
     val targetMetaborgDir = targetDir.resolve("metaborg")
     val languageFiles = project.languageFiles
-    val languageSpecification = spoofaxMeta.getLanguageSpecification(project)
-    val task = project.tasks.registerSpoofaxBuildTask(spoofax, { spoofaxMeta.getLanguageSpecification(project) })
-    task.configure {
+    val task = project.tasks.registerSpoofaxBuildTask(spoofaxInstance.spoofax, { spoofaxInstance.spoofaxMeta.getLanguageSpecification(project) })
+    task.configureSafely {
       // Task dependencies:
       // 1. Language files, which influences which languages are loaded.
       dependsOn(languageFiles)
@@ -248,6 +246,7 @@ class SpoofaxLanguageSpecificationPlugin : Plugin<Project> {
         })
       }
 
+      val languageSpecification = spoofaxInstance.spoofaxMeta.getLanguageSpecification(project)
       languageSpecification.config().pardonedLanguages().forEach {
         addPardonedLanguage(it)
       }
@@ -255,8 +254,8 @@ class SpoofaxLanguageSpecificationPlugin : Plugin<Project> {
       doFirst {
         // Requires configuration override, languages, and dialects to be loaded.
         lazyOverrideDependenciesInConfig(extension)
-        lazyLoadLanguages(languageFiles, project, spoofax)
-        lazyLoadDialects(spoofax.getProjectLocation(project), project, spoofax)
+        lazyLoadLanguages(languageFiles, project, spoofaxInstance.spoofax)
+        lazyLoadDialects(spoofaxInstance.spoofax.getProjectLocation(project), project, spoofaxInstance.spoofax)
       }
 
       doLast {
@@ -270,7 +269,7 @@ class SpoofaxLanguageSpecificationPlugin : Plugin<Project> {
   private fun configureGenerateSourcesTask(
     project: Project,
     extension: SpoofaxLangSpecExtension,
-    spoofaxMeta: SpoofaxMeta,
+    spoofaxInstance: SpoofaxInstance,
     buildTask: TaskProvider<*>
   ): TaskProvider<*> {
     val projectDir = project.projectDir
@@ -278,7 +277,7 @@ class SpoofaxLanguageSpecificationPlugin : Plugin<Project> {
     val metaborgComponentYaml = srcGenDir.resolve("metaborg.component.yaml")
     val languageFiles = project.languageFiles
     val compileClasspath = project.configurations.getByName(JavaPlugin.COMPILE_CLASSPATH_CONFIGURATION_NAME)
-    return project.tasks.register("spoofaxGenerateSources") {
+    return project.tasks.registerSafely("spoofaxGenerateSources") {
       // Task dependencies:
       // 1. Language files, which in turn influences the src-gen/metaborg.component.yaml file.
       dependsOn(languageFiles)
@@ -321,10 +320,10 @@ class SpoofaxLanguageSpecificationPlugin : Plugin<Project> {
       }
 
       doLast {
-        val languageSpecification = spoofaxMeta.getLanguageSpecification(project)
+        val languageSpecification = spoofaxInstance.spoofaxMeta.getLanguageSpecification(project)
         val metaBuilderInput = LanguageSpecBuildInput(languageSpecification)
-        spoofaxMeta.metaBuilder.initialize(metaBuilderInput)
-        spoofaxMeta.metaBuilder.generateSources(metaBuilderInput, null)
+        spoofaxInstance.spoofaxMeta.metaBuilder.initialize(metaBuilderInput)
+        spoofaxInstance.spoofaxMeta.metaBuilder.generateSources(metaBuilderInput, null)
       }
     }
   }
@@ -332,8 +331,7 @@ class SpoofaxLanguageSpecificationPlugin : Plugin<Project> {
   private fun configureCompileTask(
     project: Project,
     extension: SpoofaxLangSpecExtension,
-    spoofax: Spoofax,
-    spoofaxMeta: SpoofaxMeta,
+    spoofaxInstance: SpoofaxInstance,
     buildTask: TaskProvider<*>,
     generateSourcesTask: TaskProvider<*>
   ): TaskProvider<*> {
@@ -342,7 +340,7 @@ class SpoofaxLanguageSpecificationPlugin : Plugin<Project> {
     val targetDir = projectDir.resolve("target")
     val targetMetaborgDir = targetDir.resolve("metaborg")
     val languageFiles = project.languageFiles
-    val task = project.tasks.register("spoofaxCompile") {
+    val task = project.tasks.registerSafely("spoofaxCompile") {
       // Task dependencies:
       // 1. Language files, which influences which languages are loaded.
       dependsOn(languageFiles)
@@ -381,7 +379,7 @@ class SpoofaxLanguageSpecificationPlugin : Plugin<Project> {
           include("**/*.str", "**/*.tbl", "**/*.pp.af")
           exclude(*extension.defaultInputExcludePatterns.get().toTypedArray())
         })
-        val languageSpecification = spoofaxMeta.getLanguageSpecification(project)
+        val languageSpecification = spoofaxInstance.spoofaxMeta.getLanguageSpecification(project)
         when(languageSpecification.config().strFormat()!!) {
           StrategoFormat.jar -> outputs.dir(srcGenDir.resolve("stratego-java"))
           StrategoFormat.ctree -> outputs.file(targetMetaborgDir.resolve("stratego.ctree"))
@@ -401,13 +399,13 @@ class SpoofaxLanguageSpecificationPlugin : Plugin<Project> {
       doFirst {
         // Requires configuration override, languages, and dialects to be loaded.
         lazyOverrideDependenciesInConfig(extension)
-        lazyLoadLanguages(languageFiles, project, spoofax)
-        lazyLoadDialects(spoofax.getProjectLocation(project), project, spoofax)
+        lazyLoadLanguages(languageFiles, project, spoofaxInstance.spoofax)
+        lazyLoadDialects(spoofaxInstance.spoofax.getProjectLocation(project), project, spoofaxInstance.spoofax)
       }
 
       doLast {
-        val languageSpecification = spoofaxMeta.getLanguageSpecification(project)
-        spoofaxMeta.metaBuilder.compile(LanguageSpecBuildInput(languageSpecification))
+        val languageSpecification = spoofaxInstance.spoofaxMeta.getLanguageSpecification(project)
+        spoofaxInstance.spoofaxMeta.metaBuilder.compile(LanguageSpecBuildInput(languageSpecification))
 
         // Override Stratego provider again, as compile runs the ESV compiler again.
         overrideStrategoProvider(project, extension)
@@ -420,15 +418,14 @@ class SpoofaxLanguageSpecificationPlugin : Plugin<Project> {
   private fun configurePackageTask(
     project: Project,
     extension: SpoofaxLangSpecExtension,
-    spoofax: Spoofax,
-    spoofaxMeta: SpoofaxMeta,
+    spoofaxInstance: SpoofaxInstance,
     compileTask: TaskProvider<*>
   ): TaskProvider<*> {
     val projectDir = project.projectDir
     val targetDir = projectDir.resolve("target")
     val targetMetaborgDir = targetDir.resolve("metaborg")
     val languageFiles = project.languageFiles
-    return project.tasks.register("spoofaxLangSpecPackage") {
+    return project.tasks.registerSafely("spoofaxLangSpecPackage") {
       // Task dependencies:
       // 1. Language files, which influences which languages are loaded.
       dependsOn(languageFiles)
@@ -446,7 +443,7 @@ class SpoofaxLanguageSpecificationPlugin : Plugin<Project> {
         // * Stratego and Stratego Java strategies compiled class files.
         inputs.files(targetDir.resolve("classes"))
         // * Stratego JAR
-        val languageSpecification = spoofaxMeta.getLanguageSpecification(project)
+        val languageSpecification = spoofaxInstance.spoofaxMeta.getLanguageSpecification(project)
         if(languageSpecification.config().strFormat() == StrategoFormat.jar) {
           // - pp.af and .tbl files are included into the JAR file
           inputs.files(project.fileTree(".") {
@@ -469,13 +466,13 @@ class SpoofaxLanguageSpecificationPlugin : Plugin<Project> {
       doFirst {
         // Requires configuration override, languages, and dialects to be loaded.
         lazyOverrideDependenciesInConfig(extension)
-        lazyLoadLanguages(languageFiles, project, spoofax)
-        lazyLoadDialects(spoofax.getProjectLocation(project), project, spoofax)
+        lazyLoadLanguages(languageFiles, project, spoofaxInstance.spoofax)
+        lazyLoadDialects(spoofaxInstance.spoofax.getProjectLocation(project), project, spoofaxInstance.spoofax)
       }
 
       doLast {
-        val languageSpecification = spoofaxMeta.getLanguageSpecification(project)
-        spoofaxMeta.metaBuilder.pkg(LanguageSpecBuildInput(languageSpecification))
+        val languageSpecification = spoofaxInstance.spoofaxMeta.getLanguageSpecification(project)
+        spoofaxInstance.spoofaxMeta.metaBuilder.pkg(LanguageSpecBuildInput(languageSpecification))
       }
     }
   }
@@ -483,8 +480,7 @@ class SpoofaxLanguageSpecificationPlugin : Plugin<Project> {
   private fun configureArchiveTask(
     project: Project,
     extension: SpoofaxLangSpecExtension,
-    spoofax: Spoofax,
-    spoofaxMeta: SpoofaxMeta,
+    spoofaxInstance: SpoofaxInstance,
     buildTask: TaskProvider<*>,
     generateSourcesTask: TaskProvider<*>,
     compileTask: TaskProvider<*>,
@@ -496,8 +492,8 @@ class SpoofaxLanguageSpecificationPlugin : Plugin<Project> {
     val targetDir = projectDir.resolve("target")
     val targetMetaborgDir = targetDir.resolve("metaborg")
     val languageFiles = project.languageFiles
-    val archiveFile = spoofax.resourceService.localPath(archiveLocation)!!
-    val task = project.tasks.register("spoofaxArchive") {
+    val archiveFile = spoofaxInstance.spoofax.resourceService.localPath(archiveLocation)!!
+    val task = project.tasks.registerSafely("spoofaxArchive") {
       // Task dependencies:
       // 1. Language files, which influences which languages are loaded.
       dependsOn(languageFiles)
@@ -532,14 +528,14 @@ class SpoofaxLanguageSpecificationPlugin : Plugin<Project> {
       doFirst {
         // Requires configuration override, languages, and dialects to be loaded.
         lazyOverrideDependenciesInConfig(extension)
-        lazyLoadLanguages(languageFiles, project, spoofax)
-        lazyLoadDialects(spoofax.getProjectLocation(project), project, spoofax)
+        lazyLoadLanguages(languageFiles, project, spoofaxInstance.spoofax)
+        lazyLoadDialects(spoofaxInstance.spoofax.getProjectLocation(project), project, spoofaxInstance.spoofax)
       }
 
       doLast {
-        val languageSpecification = spoofaxMeta.getLanguageSpecification(project)
-        spoofaxMeta.metaBuilder.archive(LanguageSpecBuildInput(languageSpecification))
-        lazyLoadCompiledLanguage(archiveLocation, project, spoofax) // Test language archive by loading it.
+        val languageSpecification = spoofaxInstance.spoofaxMeta.getLanguageSpecification(project)
+        spoofaxInstance.spoofaxMeta.metaBuilder.archive(LanguageSpecBuildInput(languageSpecification))
+        lazyLoadCompiledLanguage(archiveLocation, project, spoofaxInstance.spoofax) // Test language archive by loading it.
       }
     }
     project.tasks.getByName(LifecycleBasePlugin.ASSEMBLE_TASK_NAME).dependsOn(task)
@@ -581,20 +577,19 @@ class SpoofaxLanguageSpecificationPlugin : Plugin<Project> {
   private fun configureCleanTask(
     project: Project,
     extension: SpoofaxLangSpecExtension,
-    spoofax: Spoofax,
-    spoofaxMeta: SpoofaxMeta
+    spoofaxInstance: SpoofaxInstance
   ) {
-    val languageSpecification = spoofaxMeta.getLanguageSpecification(project)
+    val languageSpecification = spoofaxInstance.spoofaxMeta.getLanguageSpecification(project)
     val languageFiles = project.languageFiles
-    val spoofaxCleanTask = project.tasks.registerSpoofaxCleanTask(spoofax, languageSpecification)
-    spoofaxCleanTask.configure {
+    val spoofaxCleanTask = project.tasks.registerSpoofaxCleanTask(spoofaxInstance.spoofax, languageSpecification)
+    spoofaxCleanTask.configureSafely {
       // No other inputs/outputs known: always execute.
 
       doFirst {
         // Requires configuration override, languages, and dialects to be loaded.
         lazyOverrideDependenciesInConfig(extension)
-        lazyLoadLanguages(languageFiles, project, spoofax)
-        lazyLoadDialects(spoofax.getProjectLocation(project), project, spoofax)
+        lazyLoadLanguages(languageFiles, project, spoofaxInstance.spoofax)
+        lazyLoadDialects(spoofaxInstance.spoofax.getProjectLocation(project), project, spoofaxInstance.spoofax)
       }
     }
     val task = project.tasks.register("spoofaxLangSpecClean") {
@@ -603,7 +598,7 @@ class SpoofaxLanguageSpecificationPlugin : Plugin<Project> {
       // Inputs/outputs: none, always execute.
 
       doLast {
-        spoofaxMeta.metaBuilder.clean(LanguageSpecBuildInput(languageSpecification))
+        spoofaxInstance.spoofaxMeta.metaBuilder.clean(LanguageSpecBuildInput(languageSpecification))
       }
     }
     project.tasks.getByName(LifecycleBasePlugin.CLEAN_TASK_NAME).dependsOn(task)
@@ -613,14 +608,13 @@ class SpoofaxLanguageSpecificationPlugin : Plugin<Project> {
   private fun configureBuildExamplesTask(
     project: Project,
     extension: SpoofaxLangSpecExtension,
-    spoofax: Spoofax,
-    spoofaxMeta: SpoofaxMeta,
+    spoofaxInstance: SpoofaxInstance,
     archiveTask: TaskProvider<*>,
     archiveLocation: FileObject
   ) {
-    val languageSpecification = spoofaxMeta.getLanguageSpecification(project)
-    val task = project.tasks.registerSpoofaxBuildTask(spoofax, { languageSpecification }, "spoofaxBuildExamples")
-    task.configure {
+    val languageSpecification = spoofaxInstance.spoofaxMeta.getLanguageSpecification(project)
+    val task = project.tasks.registerSpoofaxBuildTask(spoofaxInstance.spoofax, { languageSpecification }, "spoofaxBuildExamples")
+    task.configureSafely {
       // Task dependencies:
       // 1. Archive task, which provides the archive of the compiled language specification which we are loading in this task.
       dependsOn(archiveTask)
@@ -638,7 +632,7 @@ class SpoofaxLanguageSpecificationPlugin : Plugin<Project> {
 
       doFirst {
         // Requires compiled language to be loaded.
-        lazyLoadCompiledLanguage(archiveLocation, project, spoofax)
+        lazyLoadCompiledLanguage(archiveLocation, project, spoofaxInstance.spoofax)
       }
     }
     project.tasks.getByName(LifecycleBasePlugin.CHECK_TASK_NAME).dependsOn(task)
@@ -648,15 +642,13 @@ class SpoofaxLanguageSpecificationPlugin : Plugin<Project> {
   private fun configureTestTask(
     project: Project,
     extension: SpoofaxLangSpecExtension,
-    spoofax: Spoofax,
-    spoofaxMeta: SpoofaxMeta,
-    sptInjector: Injector,
+    spoofaxInstance: SpoofaxInstance,
     archiveTask: TaskProvider<*>,
     archiveLocation: FileObject
   ) {
-    val languageSpecification = spoofaxMeta.getLanguageSpecification(project)
-    val task = project.tasks.registerSpoofaxTestTask(spoofax, sptInjector, { spoofax.getProject(project) })
-    task.configure {
+    val languageSpecification = spoofaxInstance.spoofaxMeta.getLanguageSpecification(project)
+    val task = project.tasks.registerSpoofaxTestTask(spoofaxInstance.spoofax, spoofaxInstance.sptInjector, { spoofaxInstance.spoofax.getProject(project) })
+    task.configureSafely {
       // Only execute task if runTests is set to true.
       onlyIf { extension.runTests.finalizeValue(); extension.runTests.get() }
 
@@ -669,8 +661,8 @@ class SpoofaxLanguageSpecificationPlugin : Plugin<Project> {
 
       doFirst {
         // Requires compiled language and SPT language to be loaded.
-        lazyLoadCompiledLanguage(archiveLocation, project, spoofax)
-        lazyLoadLanguages(project.sptLanguageFiles, project, spoofax)
+        lazyLoadCompiledLanguage(archiveLocation, project, spoofaxInstance.spoofax)
+        lazyLoadLanguages(project.sptLanguageFiles, project, spoofaxInstance.spoofax)
       }
     }
     project.tasks.getByName(LifecycleBasePlugin.CHECK_TASK_NAME).dependsOn(task)
