@@ -134,8 +134,8 @@ class SpoofaxLanguageSpecificationPlugin : Plugin<Project> {
   ) {
     configureProjectAfterEvaluate(project, extension, spoofaxInstance)
 
-    val buildTask = configureBuildTask(project, extension, spoofaxInstance)
-    val generateSourcesTask = configureGenerateSourcesTask(project, extension, spoofaxInstance, buildTask)
+    val generateSourcesTask = configureGenerateSourcesTask(project, extension, spoofaxInstance)
+    val buildTask = configureBuildTask(project, extension, spoofaxInstance, generateSourcesTask)
     val compileTask = configureCompileTask(project, extension, spoofaxInstance, buildTask, generateSourcesTask)
     val packageTask = configurePackageTask(project, extension, spoofaxInstance, compileTask)
 
@@ -184,10 +184,70 @@ class SpoofaxLanguageSpecificationPlugin : Plugin<Project> {
     }
   }
 
-  private fun configureBuildTask(
+  private fun configureGenerateSourcesTask(
     project: Project,
     extension: SpoofaxLangSpecExtension,
     spoofaxInstance: SpoofaxInstance
+  ): TaskProvider<*> {
+    val projectDir = project.projectDir
+    val srcGenDir = projectDir.resolve("src-gen")
+    val metaborgComponentYaml = srcGenDir.resolve("metaborg.component.yaml")
+    val languageFiles = project.languageFiles
+    val compileClasspath = project.configurations.getByName(JavaPlugin.COMPILE_CLASSPATH_CONFIGURATION_NAME)
+    return project.tasks.registerSafely("spoofaxGenerateSources") {
+      // Task dependencies:
+      // 1. Language files, which in turn influences the src-gen/metaborg.component.yaml file.
+      dependsOn(languageFiles)
+      // 2. Java compile classpath, which in turn influences the src-gen/metaborg.component.yaml file.
+      dependsOn(compileClasspath)
+      // 3. Extension properties
+      inputs.property("otherApproximateDependencies", extension.otherApproximateDependencies)
+      // 4. Gradle group/name/version influences the `metaborg.component.yaml` fike.
+      inputs.property("group", project.group.toString())
+      inputs.property("name", project.name)
+      inputs.property("version", project.version.toString())
+      // General inputs:
+      if(extension.otherApproximateDependencies.get()) {
+        // Approximate inputs/outputs:
+        // * `metaborg.yaml` config file
+        inputs.file(projectDir.resolve("metaborg.yaml"))
+        // Outputs:
+        // * generated `metaborg.component.yaml` file
+        outputs.file(metaborgComponentYaml)
+        // * generated completion file
+        outputs.file(srcGenDir.resolve("completion/completion.str"))
+        // * generated permissive normalized grammar
+        outputs.file(srcGenDir.resolve("syntax/normalized/permissive-norm.aterm"))
+      } else {
+        // Conservative inputs: any file in the project directory (not matching include exclude patterns).
+        inputs.files(project.fileTree(".") {
+          exclude(*extension.defaultInputExcludePatterns.get().toTypedArray())
+        })
+        // Conservative outputs: any file in the project directory (not matching output exclude patterns).
+        outputs.files(project.fileTree(".") {
+          exclude(*extension.defaultOutputExcludePatterns.get().toTypedArray())
+        })
+      }
+
+      doFirst {
+        // Requires configuration override.
+        lazyOverrideDependenciesInConfig(extension)
+      }
+
+      doLast {
+        val languageSpecification = spoofaxInstance.spoofaxMeta.getLanguageSpecification(project)
+        val metaBuilderInput = LanguageSpecBuildInput(languageSpecification)
+        spoofaxInstance.spoofaxMeta.metaBuilder.initialize(metaBuilderInput)
+        spoofaxInstance.spoofaxMeta.metaBuilder.generateSources(metaBuilderInput, null)
+      }
+    }
+  }
+
+  private fun configureBuildTask(
+    project: Project,
+    extension: SpoofaxLangSpecExtension,
+    spoofaxInstance: SpoofaxInstance,
+    generateSourcesTask: TaskProvider<*>
   ): TaskProvider<SpoofaxBuildTask> {
     val projectDir = project.projectDir
     val srcGenDir = projectDir.resolve("src-gen")
@@ -204,6 +264,8 @@ class SpoofaxLanguageSpecificationPlugin : Plugin<Project> {
       inputs.property("strategoFormat", extension.strategoFormat).optional(true)
       inputs.property("approximateSpoofaxBuildDependencies", extension.spoofaxBuildApproximateDependencies)
       // TODO: Stratego dialects through *.tbl files in non-output directories
+      // 3. Must run after generateSources task, because it may generate meta-language files.
+      mustRunAfter(generateSourcesTask)
       // General inputs:
       if(extension.spoofaxBuildApproximateDependencies.get()) {
         // Approximate inputs:
@@ -264,68 +326,6 @@ class SpoofaxLanguageSpecificationPlugin : Plugin<Project> {
       }
     }
     return task
-  }
-
-  private fun configureGenerateSourcesTask(
-    project: Project,
-    extension: SpoofaxLangSpecExtension,
-    spoofaxInstance: SpoofaxInstance,
-    buildTask: TaskProvider<*>
-  ): TaskProvider<*> {
-    val projectDir = project.projectDir
-    val srcGenDir = projectDir.resolve("src-gen")
-    val metaborgComponentYaml = srcGenDir.resolve("metaborg.component.yaml")
-    val languageFiles = project.languageFiles
-    val compileClasspath = project.configurations.getByName(JavaPlugin.COMPILE_CLASSPATH_CONFIGURATION_NAME)
-    return project.tasks.registerSafely("spoofaxGenerateSources") {
-      // Task dependencies:
-      // 1. Language files, which in turn influences the src-gen/metaborg.component.yaml file.
-      dependsOn(languageFiles)
-      // 2. Java compile classpath, which in turn influences the src-gen/metaborg.component.yaml file.
-      dependsOn(compileClasspath)
-      // 3. Must run after build task, because there may be custom generateSources build steps which require files to be built.
-      mustRunAfter(buildTask)
-      // 4. Extension properties
-      inputs.property("otherApproximateDependencies", extension.otherApproximateDependencies)
-      // 5. Gradle group/name/version influences the `metaborg.component.yaml` fike.
-      inputs.property("group", project.group.toString())
-      inputs.property("name", project.name)
-      inputs.property("version", project.version.toString())
-      // General inputs:
-      if(extension.otherApproximateDependencies.get()) {
-        // Approximate inputs/outputs:
-        // * `metaborg.yaml` config file
-        inputs.file(projectDir.resolve("metaborg.yaml"))
-        // Outputs:
-        // * generated `metaborg.component.yaml` file
-        outputs.file(metaborgComponentYaml)
-        // * generated completion file
-        outputs.file(srcGenDir.resolve("completion/completion.str"))
-        // * generated permissive normalized grammar
-        outputs.file(srcGenDir.resolve("syntax/normalized/permissive-norm.aterm"))
-      } else {
-        // Conservative inputs: any file in the project directory (not matching include exclude patterns).
-        inputs.files(project.fileTree(".") {
-          exclude(*extension.defaultInputExcludePatterns.get().toTypedArray())
-        })
-        // Conservative outputs: any file in the project directory (not matching output exclude patterns).
-        outputs.files(project.fileTree(".") {
-          exclude(*extension.defaultOutputExcludePatterns.get().toTypedArray())
-        })
-      }
-
-      doFirst {
-        // Requires configuration override.
-        lazyOverrideDependenciesInConfig(extension)
-      }
-
-      doLast {
-        val languageSpecification = spoofaxInstance.spoofaxMeta.getLanguageSpecification(project)
-        val metaBuilderInput = LanguageSpecBuildInput(languageSpecification)
-        spoofaxInstance.spoofaxMeta.metaBuilder.initialize(metaBuilderInput)
-        spoofaxInstance.spoofaxMeta.metaBuilder.generateSources(metaBuilderInput, null)
-      }
-    }
   }
 
   private fun configureCompileTask(
