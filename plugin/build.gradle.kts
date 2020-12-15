@@ -1,13 +1,11 @@
-import java.util.Properties
-
 buildscript {
   if(gradle.parent?.rootProject?.name == "spoofax.gradle.root") { // If standalone build, put additional plugins on the classpath.
     repositories {
       maven("https://artifacts.metaborg.org/content/groups/public/")
     }
     dependencies {
-      classpath("org.metaborg:gradle.config:0.3.21")
-      classpath("org.metaborg:gitonium:0.1.3")
+      classpath("org.metaborg:gradle.config:0.4.2")
+      classpath("org.metaborg:gitonium:0.1.4")
     }
   }
 }
@@ -35,12 +33,12 @@ dependencies {
   api("org.metaborg:org.metaborg.spoofax.meta.core:$spoofax2Version")
   api("org.metaborg:org.metaborg.spt.core:$spoofax2Version")
   /*
-  org.metaborg.spoofax.meta.core depends on a version of PIE which depends on version 0.4.0 of org.metaborg:resource.
+  org.metaborg.spoofax.meta.core depends on a version of PIE which depends on an old version of org.metaborg:resource.
   Due to an issue in Gradle, the first version of resource that is loaded will be used by code in plugins that react to
-  certain Gradle events, such as Project#afterEvaluate. Since version 0.4.0 does not have certain API, this will fail.
-  Therefore, we force the version to 0.8.1.
+  certain Gradle events, such as Project#afterEvaluate. Since the old version does not have certain API, this will fail.
+  Therefore, we force the version to a recent one.
   */
-  api("org.metaborg:resource:0.8.1")
+  api("org.metaborg:resource:0.10.0")
 }
 
 gradlePlugin {
