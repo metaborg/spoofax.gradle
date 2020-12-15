@@ -377,6 +377,7 @@ class SpoofaxLanguageSpecificationPlugin : Plugin<Project> {
         // * Stratego
         inputs.files(project.fileTree(".") {
           include("**/*.str", "**/*.tbl", "**/*.pp.af")
+          exclude("/src-gen/pp/*-parenthesize.str") // Ignore parenthesizer, as this task generates it.
           exclude(*extension.defaultInputExcludePatterns.get().toTypedArray())
         })
         val languageSpecification = spoofaxInstance.spoofaxMeta.getLanguageSpecification(project)
