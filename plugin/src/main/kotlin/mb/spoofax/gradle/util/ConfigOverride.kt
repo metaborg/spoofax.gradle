@@ -75,9 +75,9 @@ data class ConfigOverride(
   }
 }
 
-internal fun SpoofaxExtensionBase.overrideMetaborgVersion() {
+internal fun SpoofaxExtensionBase.overrideMetaborgVersion(metaborgVersion: String?) {
   configOverrides.update(project) {
-    metaborgVersion = MetaborgConstants.METABORG_VERSION
+    this.metaborgVersion = metaborgVersion
   }
 }
 

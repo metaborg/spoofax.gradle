@@ -42,7 +42,7 @@ fun lazyLoadCompiledLanguage(archiveLoc: FileObject, project: Project, spoofax: 
     spoofax.languageDiscoveryService.languageFromArchive(archiveLoc)
   }
 
-inline fun lazilyDo(project: Project, id: String, func: () -> Unit) {
+fun lazilyDo(project: Project, id: String, func: () -> Unit) {
   if(project.extra.has(id)) return
   func()
   project.extra.set(id, true)

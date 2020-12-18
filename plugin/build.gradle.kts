@@ -25,15 +25,14 @@ plugins {
   `maven-publish`
 }
 
+var spoofax2Version: String
+var spoofax2CoreDependency: String
 val standaloneBuild = gradle.parent?.rootProject?.name == "spoofax.gradle.root"
-val spoofax2Version: String = if(standaloneBuild) {
-  System.getProperty("spoofax2Version")
-} else {
-  ext["spoofax2Version"]!! as String
-}
 if(standaloneBuild) { // If standalone build, apply additional plugins and set different dependencies.
   apply(plugin = "org.metaborg.gradle.config.root-project")
   apply(plugin = "org.metaborg.gitonium")
+  spoofax2Version = System.getProperty("spoofax2Version")
+  spoofax2CoreDependency = "org.metaborg:org.metaborg.spoofax.core:$spoofax2Version"
   // Embed Spoofax Core dependencies into the plugin so that users do not receive the transitive dependency tree.
   val embedded: Configuration = configurations.create("embedded")
   configurations.getByName(JavaPlugin.COMPILE_ONLY_CONFIGURATION_NAME).extendsFrom(embedded)
@@ -53,6 +52,8 @@ if(standaloneBuild) { // If standalone build, apply additional plugins and set d
     }
   }
 } else {
+  spoofax2Version = ext["spoofax2Version"]!!.toString()
+  spoofax2CoreDependency = "$group:org.metaborg.spoofax.core:$version"
   dependencies {
     api("$group:org.metaborg.spoofax.meta.core:$version")
     api("org.metaborg:org.metaborg.spt.core:$spoofax2Version")
@@ -97,5 +98,45 @@ gradlePlugin {
       id = "org.metaborg$pluginIdAffix.spoofax.gradle.test"
       implementationClass = "mb.spoofax.gradle.plugin.SpoofaxTestPlugin"
     }
+  }
+}
+
+// Add generated resources directory as a resource source directory.
+val generatedResourcesDir = project.buildDir.resolve("generated/resources")
+sourceSets {
+  main {
+    resources {
+      srcDir(generatedResourcesDir)
+    }
+  }
+}
+// Task that writes properties to a config.properties file, which is used in the plugin.
+val propertiesFile = generatedResourcesDir.resolve("config.properties")
+val generatePropertiesTask = tasks.register("generateConfigProperties") {
+  inputs.property("spoofax2Version", spoofax2Version)
+  inputs.property("spoofax2CoreDependency", spoofax2CoreDependency)
+  outputs.file(propertiesFile)
+  doLast {
+    val properties = NonShittyProperties()
+    properties.setProperty("spoofax2Version", spoofax2Version)
+    properties.setProperty("spoofax2CoreDependency", spoofax2CoreDependency)
+    propertiesFile.parentFile.run { if(!exists()) mkdirs() }
+    propertiesFile.bufferedWriter().use {
+      properties.storeWithoutDate(it)
+    }
+  }
+}
+tasks.compileJava.configure { dependsOn(generatePropertiesTask) }
+// Custom properties class that does not write the current date, fixing incrementality.
+class NonShittyProperties : java.util.Properties() {
+  fun storeWithoutDate(writer: java.io.BufferedWriter) {
+    val e: java.util.Enumeration<*> = keys()
+    while(e.hasMoreElements()) {
+      val key = e.nextElement()
+      val value = get(key)
+      writer.write("$key=$value")
+      writer.newLine()
+    }
+    writer.flush()
   }
 }

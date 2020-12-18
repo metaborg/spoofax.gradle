@@ -10,15 +10,24 @@ import org.gradle.api.provider.Property
 import org.gradle.kotlin.dsl.*
 import org.metaborg.core.MetaborgConstants
 import org.metaborg.core.config.IProjectConfig
+import java.io.IOException
+import java.io.InputStream
+import java.util.*
 
+@Suppress("UnstableApiUsage", "MemberVisibilityCanBePrivate")
 open class SpoofaxExtensionBase internal constructor(internal val project: Project) {
-  var addCompileDependenciesFromMetaborgYaml: Property<Boolean> = project.objects.property()
-  var addSourceDependenciesFromMetaborgYaml: Property<Boolean> = project.objects.property()
-  var addJavaDependenciesFromMetaborgYaml: Property<Boolean> = project.objects.property()
+  val spoofax2Version: Property<String> = project.objects.property()
+  val spoofax2CoreDependency: Property<String> = project.objects.property()
+  val addCompileDependenciesFromMetaborgYaml: Property<Boolean> = project.objects.property()
+  val addSourceDependenciesFromMetaborgYaml: Property<Boolean> = project.objects.property()
+  val addJavaDependenciesFromMetaborgYaml: Property<Boolean> = project.objects.property()
   val addSpoofaxCoreDependency: Property<Boolean> = project.objects.property()
   val addSpoofaxRepository: Property<Boolean> = project.objects.property()
 
   init {
+    val configProperties = configProperties()
+    spoofax2Version.convention(configProperties["spoofax2Version"]?.toString() ?: MetaborgConstants.METABORG_VERSION)
+    spoofax2CoreDependency.convention(configProperties["spoofax2CoreDependency"]?.toString() ?: "org.metaborg:org.metaborg.spoofax.core:$spoofax2Version")
     addCompileDependenciesFromMetaborgYaml.convention(true)
     addSourceDependenciesFromMetaborgYaml.convention(true)
     addJavaDependenciesFromMetaborgYaml.convention(true)
@@ -56,10 +65,9 @@ open class SpoofaxExtensionBase internal constructor(internal val project: Proje
   }
 
   internal fun addSpoofaxCoreDependency() {
-    addSpoofaxCoreDependency.finalizeValue()
+    spoofax2CoreDependency.finalizeValue()
     if(addSpoofaxCoreDependency.get() && project.plugins.hasPlugin(JavaPlugin::class.java)) {
-      project.configurations.getByName(JavaPlugin.COMPILE_ONLY_CONFIGURATION_NAME).dependencies
-        .add(project.dependencies.create("org.metaborg", "org.metaborg.spoofax.core", MetaborgConstants.METABORG_VERSION))
+      project.configurations.getByName(JavaPlugin.COMPILE_ONLY_CONFIGURATION_NAME).dependencies.add(project.dependencies.create(spoofax2CoreDependency.get()))
     }
   }
 
@@ -70,5 +78,19 @@ open class SpoofaxExtensionBase internal constructor(internal val project: Proje
         maven("https://artifacts.metaborg.org/content/groups/public/")
       }
     }
+  }
+
+
+  private fun configProperties(): Properties {
+    val properties = Properties()
+    val inputStream: InputStream? = javaClass.classLoader.getResourceAsStream("config.properties")
+    if(inputStream != null) {
+      try {
+        inputStream.use { properties.load(it) }
+      } catch(e: IOException) {
+        // Ignore
+      }
+    }
+    return properties
   }
 }

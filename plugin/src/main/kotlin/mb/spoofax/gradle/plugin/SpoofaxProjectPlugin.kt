@@ -1,6 +1,5 @@
 package mb.spoofax.gradle.plugin
 
-import com.google.inject.Injector
 import mb.spoofax.gradle.task.registerSpoofaxBuildTask
 import mb.spoofax.gradle.task.registerSpoofaxCleanTask
 import mb.spoofax.gradle.task.registerSpoofaxTestTask
@@ -22,7 +21,6 @@ import org.gradle.api.provider.SetProperty
 import org.gradle.kotlin.dsl.*
 import org.gradle.language.base.plugins.LifecycleBasePlugin
 import org.metaborg.core.language.LanguageIdentifier
-import org.metaborg.spoofax.core.Spoofax
 
 @Suppress("unused")
 open class SpoofaxProjectExtension(project: Project) : SpoofaxExtensionBase(project) {
@@ -72,7 +70,8 @@ class SpoofaxProjectPlugin : Plugin<Project> {
 
   private fun configureProjectAfterEvaluate(project: Project, extension: SpoofaxProjectExtension, spoofaxInstance: SpoofaxInstance) {
     // Override the metaborgVersion and language identifier in the configuration, with values from the extension.
-    extension.overrideMetaborgVersion()
+    extension.spoofax2Version.finalizeValue()
+    extension.overrideMetaborgVersion(extension.spoofax2Version.get())
     extension.overrideIdentifiers()
 
     // Add dependencies to corresponding configurations.

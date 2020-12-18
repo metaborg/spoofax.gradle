@@ -1,6 +1,5 @@
 package mb.spoofax.gradle.plugin
 
-import com.google.inject.Injector
 import mb.spoofax.gradle.task.SpoofaxBuildTask
 import mb.spoofax.gradle.task.registerSpoofaxBuildTask
 import mb.spoofax.gradle.task.registerSpoofaxCleanTask
@@ -35,8 +34,6 @@ import org.gradle.api.tasks.SourceSetContainer
 import org.gradle.api.tasks.TaskProvider
 import org.gradle.kotlin.dsl.*
 import org.gradle.language.base.plugins.LifecycleBasePlugin
-import org.metaborg.spoofax.core.Spoofax
-import org.metaborg.spoofax.meta.core.SpoofaxMeta
 import org.metaborg.spoofax.meta.core.build.LanguageSpecBuildInput
 import org.metaborg.spoofax.meta.core.build.SpoofaxLangSpecCommonPaths
 import org.metaborg.spoofax.meta.core.config.StrategoFormat
@@ -155,7 +152,8 @@ class SpoofaxLanguageSpecificationPlugin : Plugin<Project> {
     spoofaxInstance: SpoofaxInstance
   ) {
     // Override the metaborgVersion, language identifier, and the Stratego format in the configuration, with values from the extension.
-    extension.overrideMetaborgVersion()
+    extension.spoofax2Version.finalizeValue()
+    extension.overrideMetaborgVersion(extension.spoofax2Version.get())
     extension.overrideIdentifiers()
     extension.strategoFormat.finalizeValue()
     if(extension.strategoFormat.isPresent) {

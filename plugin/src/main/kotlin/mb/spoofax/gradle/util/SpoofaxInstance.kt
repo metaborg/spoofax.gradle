@@ -33,6 +33,7 @@ import org.metaborg.spoofax.meta.core.config.ISpoofaxLanguageSpecConfigService
 import org.metaborg.spoofax.meta.core.config.ISpoofaxLanguageSpecConfigWriter
 import org.metaborg.spoofax.meta.core.config.SpoofaxLanguageSpecConfigBuilder
 import org.metaborg.spt.core.SPTModule
+import java.lang.ref.SoftReference
 import java.util.*
 
 internal class SpoofaxInstance {
@@ -97,9 +98,17 @@ internal class SpoofaxInstance {
 }
 
 internal object SpoofaxInstanceCache {
-  private val instances: WeakHashMap<Project, SpoofaxInstance> = WeakHashMap()
+  private val instances: WeakHashMap<Project, SoftReference<SpoofaxInstance>> = WeakHashMap()
 
-  operator fun get(project: Project): SpoofaxInstance = instances.getOrPut(project) { SpoofaxInstance() }
+  operator fun get(project: Project): SpoofaxInstance {
+    val softInstance = instances.getOrPut(project) { SoftReference(SpoofaxInstance()) }
+    var instance = softInstance.get()
+    if(instance == null) {
+      instance = SpoofaxInstance()
+      instances[project] = SoftReference(instance)
+    }
+    return instance
+  }
 }
 
 // Use a null module plugin loader for Spoofax & SpoofaxMeta, as service loading does not work well in a Gradle environment.
