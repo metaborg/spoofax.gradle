@@ -37,6 +37,7 @@ import org.gradle.language.base.plugins.LifecycleBasePlugin
 import org.metaborg.spoofax.meta.core.build.LanguageSpecBuildInput
 import org.metaborg.spoofax.meta.core.build.SpoofaxLangSpecCommonPaths
 import org.metaborg.spoofax.meta.core.config.StrategoFormat
+import org.metaborg.spoofax.meta.core.pluto.SpoofaxContext
 import java.io.File
 import java.io.IOException
 
@@ -404,7 +405,11 @@ class SpoofaxLanguageSpecificationPlugin : Plugin<Project> {
 
       doLast {
         val languageSpecification = spoofaxInstance.spoofaxMeta.getLanguageSpecification(project)
-        spoofaxInstance.spoofaxMeta.metaBuilder.compile(LanguageSpecBuildInput(languageSpecification))
+        try {
+          spoofaxInstance.spoofaxMeta.metaBuilder.compile(LanguageSpecBuildInput(languageSpecification))
+        } finally {
+          SpoofaxContext.deinit() // Deinit Spoofax-Pluto context so it can be reused by other builds on the same thread.
+        }
 
         // Override Stratego provider again, as compile runs the ESV compiler again.
         overrideStrategoProvider(project, extension)
@@ -471,7 +476,11 @@ class SpoofaxLanguageSpecificationPlugin : Plugin<Project> {
 
       doLast {
         val languageSpecification = spoofaxInstance.spoofaxMeta.getLanguageSpecification(project)
-        spoofaxInstance.spoofaxMeta.metaBuilder.pkg(LanguageSpecBuildInput(languageSpecification))
+        try {
+          spoofaxInstance.spoofaxMeta.metaBuilder.pkg(LanguageSpecBuildInput(languageSpecification))
+        } finally {
+          SpoofaxContext.deinit() // Deinit Spoofax-Pluto context so it can be reused by other builds on the same thread.
+        }
       }
     }
   }
@@ -533,7 +542,11 @@ class SpoofaxLanguageSpecificationPlugin : Plugin<Project> {
 
       doLast {
         val languageSpecification = spoofaxInstance.spoofaxMeta.getLanguageSpecification(project)
-        spoofaxInstance.spoofaxMeta.metaBuilder.archive(LanguageSpecBuildInput(languageSpecification))
+        try {
+          spoofaxInstance.spoofaxMeta.metaBuilder.archive(LanguageSpecBuildInput(languageSpecification))
+        } finally {
+          SpoofaxContext.deinit() // Deinit Spoofax-Pluto context so it can be reused by other builds on the same thread.
+        }
         lazyLoadCompiledLanguage(archiveLocation, project, spoofaxInstance.spoofax) // Test language archive by loading it.
       }
     }
