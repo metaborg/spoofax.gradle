@@ -23,7 +23,7 @@ fun lazyLoadLanguages(languageConfig: Configuration, project: Project, spoofax: 
     languageConfig.forEach { spoofaxLanguageFile ->
       val spoofaxLanguageLoc = spoofax.resourceService.resolve(spoofaxLanguageFile)
       try {
-        spoofax.languageDiscoveryService.languageFromArchive(spoofaxLanguageLoc)
+        spoofax.languageDiscoveryService.componentFromArchive(spoofaxLanguageLoc)
       } catch(e: MetaborgException) {
         throw GradleException("Failed to load language from $spoofaxLanguageFile", e)
       }
