@@ -381,7 +381,7 @@ class SpoofaxLanguageSpecificationPlugin : Plugin<Project> {
         })
         val languageSpecification = spoofaxInstance.spoofaxMeta.getLanguageSpecification(project)
         when(languageSpecification.config().strFormat()!!) {
-          StrategoFormat.jar -> outputs.dir(srcGenDir.resolve("stratego-java"))
+          StrategoFormat.jar -> outputs.dir(srcGenDir.resolve("java"))
           StrategoFormat.ctree -> outputs.file(targetMetaborgDir.resolve("stratego.ctree"))
         }
         // TODO: Stratego include files and paths that are not in the project directory.
