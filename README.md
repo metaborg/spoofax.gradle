@@ -1,3 +1,8 @@
+[![GitHub license](https://img.shields.io/github/license/metaborg/spoofax.gradle)](https://github.com/metaborg/spoofax.gradle/blob/master/LICENSE)
+[![Jenkins](https://img.shields.io/jenkins/build/https/buildfarm.metaborg.org/job/metaborg/job/spoofax.gradle/job/master)](https://buildfarm.metaborg.org/job/metaborg/job/spoofax.gradle/job/master/lastBuild)
+[![Artifact](https://img.shields.io/maven-metadata/v?label=gradle.config&metadataUrl=https%3A%2F%2Fartifacts.metaborg.org%2Fcontent%2Frepositories%2Freleases%2Forg%2Fmetaborg%2Fspoofax.gradle%2Fmaven-metadata.xml)](https://mvnrepository.com/artifact/org.metaborg/spoofax.gradle?repo=metaborg-releases)
+
+
 # Spoofax Gradle
 
 Spoofax Gradle is a Gradle plugin for building and using Spoofax language specifications.
@@ -38,13 +43,15 @@ The following table lists the supported versions:
 | 0.4.2-0.4.4           | 2.5.11  |
 | 0.4.5-latest          | 2.5.12  |
 
+The latest version of the plugin can be found at the top of this readme.
+
 ## Building and testing a language specification
 
 Apply the langspec plugin to a project (a build.gradle(.kts) file) as follows:
 
 ```kotlin
 plugins {
-  id("org.metaborg.spoofax.gradle.langspec") version("0.4.0")
+  id("org.metaborg.spoofax.gradle.langspec") version("0.4.9")
 }
 ```
 
@@ -115,7 +122,7 @@ Apply the project plugin to a project (a build.gradle(.kts) file) as follows:
 
 ```kotlin
 plugins {
-  id("org.metaborg.spoofax.gradle.project") version("0.4.0")
+  id("org.metaborg.spoofax.gradle.project") version("0.4.9")
 }
 ```
 
@@ -134,7 +141,7 @@ Apply the test plugin to a project (a build.gradle(.kts) file) as follows:
 
 ```kotlin
 plugins {
-  id("org.metaborg.spoofax.gradle.test") version("0.4.0")
+  id("org.metaborg.spoofax.gradle.test") version("0.4.9")
 }
 ```
 
