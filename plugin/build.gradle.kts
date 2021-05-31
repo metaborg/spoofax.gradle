@@ -80,7 +80,7 @@ dependencies {
   certain Gradle events, such as Project#afterEvaluate. Since the old version does not have certain API, this will fail.
   Therefore, we force the version to a recent one.
   */
-  api("org.metaborg:resource:0.10.0")
+  api("org.metaborg:resource:0.11.0")
 }
 
 gradlePlugin {
