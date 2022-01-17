@@ -13,7 +13,7 @@ jobs:
       matrix:
         os: [ubuntu-20.04, windows-2019, macos-10.15, macos-11]
         java: [8, 11]
-        gradle: [6.9.1]
+        gradle: [6.9.2, 7.3.3]
         experimental: [false]
     runs-on: ${{ matrix.os }}
     continue-on-error: ${{ matrix.experimental }}
@@ -39,4 +39,4 @@ jobs:
       - id: print-jvm-crash-logs
         if: ${{ failure() }}
         run: cat hs_err_pid*.log; cat **/hs_err_pid*.log; cat replay_pid*.log; cat **/replay_pid*.log; true
-        shell: bash
+        shell: bash {0}

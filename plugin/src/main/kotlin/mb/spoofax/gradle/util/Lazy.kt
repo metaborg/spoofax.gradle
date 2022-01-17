@@ -1,6 +1,7 @@
 package mb.spoofax.gradle.util
 
 import mb.spoofax.gradle.plugin.SpoofaxExtensionBase
+import mb.spoofax.gradle.plugin.SpoofaxLangSpecExtension
 import org.apache.commons.vfs2.FileObject
 import org.gradle.api.GradleException
 import org.gradle.api.Project
@@ -11,14 +12,28 @@ import org.metaborg.core.resource.ResourceChangeKind
 import org.metaborg.core.resource.ResourceUtils
 import org.metaborg.spoofax.core.Spoofax
 import org.metaborg.spoofax.core.resource.SpoofaxIgnoresSelector
+import java.io.File
 
-fun lazyOverrideDependenciesInConfig(extension: SpoofaxExtensionBase) =
+internal fun lazyOverrideConfig(extension: SpoofaxExtensionBase, configOverrides: SpoofaxGradleConfigOverrides, spoofax: Spoofax) =
   lazilyDo(extension.project, "overrodeDependenciesInConfig") {
-    extension.overrideDependencies()
-    extension.instance.spoofax.recreateProject(extension.project) // Recreate project to force configuration to be updated.
+    // Override the metaborgVersion, language identifier, and the Stratego format in the configuration, with values from the extension.
+    extension.overrideMetaborgVersion(extension.spoofax2Version.finalizeAndGet(), configOverrides)
+    extension.overrideIdentifiers(configOverrides)
+    if(extension is SpoofaxLangSpecExtension) { // HACK: cast. put this somewhere else
+      extension.strategoFormat.finalizeValue()
+      if(extension.strategoFormat.isPresent) {
+        extension.overrideStrategoFormat(extension.strategoFormat.get(), configOverrides)
+      }
+    }
+
+    // Override dependencies
+    extension.overrideDependencies(configOverrides)
+
+    // Recreate project to force configuration to be updated.
+    spoofax.recreateProject(extension.project)
   }
 
-fun lazyLoadLanguages(languageConfig: Configuration, project: Project, spoofax: Spoofax) =
+internal fun lazyLoadLanguages(languageConfig: Configuration, project: Project, spoofax: Spoofax) =
   lazilyDo(project, "loadedLanguagesFrom-" + languageConfig.name) {
     languageConfig.forEach { spoofaxLanguageFile ->
       val spoofaxLanguageLoc = spoofax.resourceService.resolve(spoofaxLanguageFile)
@@ -30,19 +45,22 @@ fun lazyLoadLanguages(languageConfig: Configuration, project: Project, spoofax: 
     }
   }
 
-fun lazyLoadDialects(projectLoc: FileObject, project: Project, spoofax: Spoofax) =
+internal fun lazyLoadDialects(projectLoc: FileObject, project: Project, spoofax: Spoofax) =
   lazilyDo(project, "loadedDialects") {
     val resources = ResourceUtils.find(projectLoc, SpoofaxIgnoresSelector())
     val creations = ResourceUtils.toChanges(resources, ResourceChangeKind.Create)
     spoofax.dialectProcessor.update(projectLoc, creations)
   }
 
-fun lazyLoadCompiledLanguage(archiveLoc: FileObject, project: Project, spoofax: Spoofax) =
+internal fun lazyLoadCompiledLanguage(archiveLoc: FileObject, project: Project, spoofax: Spoofax) =
   lazilyDo(project, "loadedCompiledLanguage") {
     spoofax.languageDiscoveryService.languageFromArchive(archiveLoc)
   }
 
-fun lazilyDo(project: Project, id: String, func: () -> Unit) {
+internal fun lazyLoadCompiledLanguage(archiveFile: File, project: Project, spoofax: Spoofax) =
+  lazyLoadCompiledLanguage(spoofax.resolve(archiveFile), project, spoofax)
+
+internal fun lazilyDo(project: Project, id: String, func: () -> Unit) {
   if(project.extra.has(id)) return
   func()
   project.extra.set(id, true)

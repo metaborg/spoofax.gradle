@@ -1,5 +1,6 @@
 package mb.spoofax.gradle.plugin
 
+import mb.spoofax.gradle.util.SpoofaxBuildService
 import mb.spoofax.gradle.util.toGradleDependency
 import org.gradle.api.Plugin
 import org.gradle.api.Project
@@ -10,13 +11,15 @@ import org.gradle.api.attributes.Usage
 import org.gradle.api.component.SoftwareComponentFactory
 import org.gradle.api.internal.ReusableAction
 import org.gradle.api.model.ObjectFactory
+import org.gradle.api.provider.Provider
+import org.gradle.kotlin.dsl.*
 import org.metaborg.core.MetaborgConstants
 import org.metaborg.core.language.LanguageIdentifier
 import org.metaborg.core.language.LanguageVersion
 import org.metaborg.spoofax.core.SpoofaxConstants
 import javax.inject.Inject
 
-@Suppress("UnstableApiUsage")
+
 open class SpoofaxBasePlugin @Inject constructor(
   private val objectFactory: ObjectFactory,
   private val softwareComponentFactory: SoftwareComponentFactory
@@ -145,6 +148,11 @@ internal val Project.compileLanguageFiles: Configuration get() = this.configurat
 internal val Project.sourceLanguageFiles: Configuration get() = this.configurations.getByName(SpoofaxBasePlugin.sourceLanguageFiles)
 internal val Project.languageFiles: Configuration get() = this.configurations.getByName(SpoofaxBasePlugin.languageFiles)
 internal val Project.sptLanguageFiles: Configuration get() = this.configurations.getByName(SpoofaxBasePlugin.sptLanguageFiles)
+@Suppress("UnstableApiUsage")
+internal val Project.spoofaxBuildService: Provider<SpoofaxBuildService>
+  get() = project.gradle.sharedServices.registerIfAbsent("spoofax", SpoofaxBuildService::class) {
+    maxParallelUsages.set(1)
+  }
 
 internal class SpoofaxUsageCompatibilityRules : AttributeCompatibilityRule<Usage>, ReusableAction {
   override fun execute(details: CompatibilityCheckDetails<Usage>) {

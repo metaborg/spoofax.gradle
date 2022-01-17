@@ -3,7 +3,9 @@ package mb.spoofax.gradle.util
 import com.google.inject.Injector
 import com.google.inject.Module
 import com.google.inject.Singleton
-import org.gradle.api.Project
+import org.gradle.api.invocation.Gradle
+import org.metaborg.core.build.dependency.IDependencyService
+import org.metaborg.core.build.paths.ILanguagePathService
 import org.metaborg.core.config.ILanguageComponentConfigBuilder
 import org.metaborg.core.config.ILanguageComponentConfigService
 import org.metaborg.core.config.ILanguageComponentConfigWriter
@@ -14,92 +16,80 @@ import org.metaborg.core.config.LanguageComponentConfigBuilder
 import org.metaborg.core.config.ProjectConfigService
 import org.metaborg.core.editor.IEditorRegistry
 import org.metaborg.core.editor.NullEditorRegistry
+import org.metaborg.core.language.ILanguageService
 import org.metaborg.core.plugin.IModulePluginLoader
+import org.metaborg.core.resource.IResourceService
+import org.metaborg.core.source.ISourceTextService
+import org.metaborg.mbt.core.SpoofaxExtensionModule
 import org.metaborg.meta.core.config.ILanguageSpecConfigBuilder
 import org.metaborg.meta.core.config.ILanguageSpecConfigService
 import org.metaborg.meta.core.config.ILanguageSpecConfigWriter
 import org.metaborg.meta.core.config.LanguageSpecConfigService
 import org.metaborg.spoofax.core.Spoofax
 import org.metaborg.spoofax.core.SpoofaxModule
+import org.metaborg.spoofax.core.build.ISpoofaxBuilder
 import org.metaborg.spoofax.core.config.ISpoofaxProjectConfigBuilder
 import org.metaborg.spoofax.core.config.ISpoofaxProjectConfigService
 import org.metaborg.spoofax.core.config.ISpoofaxProjectConfigWriter
 import org.metaborg.spoofax.core.config.SpoofaxProjectConfigBuilder
-import org.metaborg.spoofax.meta.core.SpoofaxExtensionModule
 import org.metaborg.spoofax.meta.core.SpoofaxMeta
 import org.metaborg.spoofax.meta.core.SpoofaxMetaModule
+import org.metaborg.spoofax.meta.core.build.LanguageSpecBuilder
 import org.metaborg.spoofax.meta.core.config.ISpoofaxLanguageSpecConfigBuilder
 import org.metaborg.spoofax.meta.core.config.ISpoofaxLanguageSpecConfigService
 import org.metaborg.spoofax.meta.core.config.ISpoofaxLanguageSpecConfigWriter
 import org.metaborg.spoofax.meta.core.config.SpoofaxLanguageSpecConfigBuilder
 import org.metaborg.spt.core.SPTModule
-import java.util.*
+import org.metaborg.spt.core.SPTRunner
+import java.util.concurrent.atomic.AtomicReference
 
-internal class SpoofaxInstance {
-  private var spoofaxInternal: Spoofax? = null
-  private var spoofaxMetaInternal: SpoofaxMeta? = null
-  private var sptInjectorInternal: Injector? = null
-
-  val spoofax: Spoofax
-    get() = if(spoofaxInternal != null) {
-      spoofaxInternal!!
-    } else {
-      val spoofax = createSpoofax()
-      spoofaxInternal = spoofax
-      spoofax
-    }
-
-  val spoofaxMeta: SpoofaxMeta
-    get() = if(spoofaxMetaInternal != null) {
-      spoofaxMetaInternal!!
-    } else {
-      val spoofaxMeta = createSpoofaxMeta(spoofax)
-      spoofaxMetaInternal = spoofaxMeta
-      spoofaxMeta
-    }
-
-  val sptInjector: Injector
-    get() = if(sptInjectorInternal != null) {
-      sptInjectorInternal!!
-    } else {
-      val injector = createSptInjector(spoofaxMeta.injector)
-      sptInjectorInternal = injector
-      injector
-    }
-
-  fun reset() {
-    sptInjectorInternal = null
-    if(spoofaxMetaInternal != null) {
-      spoofaxMetaInternal!!.close()
-      spoofaxMetaInternal = null
-    }
-    if(spoofaxInternal != null) {
-      spoofaxInternal!!.close()
-      spoofaxInternal = null
-    }
-  }
-
+open class SpoofaxInstance : AutoCloseable {
   companion object {
-    private fun createSpoofax(): Spoofax {
-      val spoofax = Spoofax(NullModulePluginLoader(), SpoofaxGradleModule(), SpoofaxExtensionModule(), org.metaborg.mbt.core.SpoofaxExtensionModule(), org.metaborg.spt.core.SpoofaxExtensionModule())
-      spoofax.configureAsHeadlessApplication()
-      return spoofax
-    }
+    private val internal = AtomicReference<SpoofaxInstance>()
 
-    private fun createSpoofaxMeta(spoofax: Spoofax): SpoofaxMeta {
-      return SpoofaxMeta(spoofax, NullModulePluginLoader(), SpoofaxGradleMetaModule())
-    }
-
-    private fun createSptInjector(injector: Injector): Injector {
-      return injector.createChildInjector(SPTModule())
+    /**
+     * Gets a SpoofaxInstance that is shared for this build. This instance should only be used for simple things like
+     * reading non-overridable configuration of projects or language specs.
+     */
+    fun getShared(gradle: Gradle): SpoofaxInstance {
+      if(internal.compareAndSet(null, SpoofaxInstance())) {
+        gradle.buildFinished {
+          internal.getAndUpdate { null }?.close()
+        }
+      }
+      return internal.get()
     }
   }
-}
 
-internal object SpoofaxInstanceCache {
-  private val instances: WeakHashMap<Project, SpoofaxInstance> = WeakHashMap()
+  val spoofax: Spoofax get() = spoofaxInternal.updateAndGet { v -> v ?: createSpoofax() }
+  val spoofaxMeta: SpoofaxMeta get() = spoofaxMetaInternal.updateAndGet { v -> v ?: createSpoofaxMeta() }
+  val sptInjector: Injector get() = sptInjectorInternal.updateAndGet { v -> v ?: createSptInjector() }
 
-  operator fun get(project: Project): SpoofaxInstance = instances.getOrPut(project) { SpoofaxInstance() }
+  val resourceService: IResourceService get() = spoofax.resourceService
+  val languageService: ILanguageService get() = spoofax.languageService
+  val sourceTextService: ISourceTextService get() = spoofax.sourceTextService
+  val dependencyService: IDependencyService get() = spoofax.dependencyService
+  val languagePathService: ILanguagePathService get() = spoofax.languagePathService
+  val builder: ISpoofaxBuilder get() = spoofax.builder
+
+  val languageSpecBuilder: LanguageSpecBuilder get() = spoofaxMeta.metaBuilder
+  internal val configOverrides: SpoofaxGradleConfigOverrides get() = spoofaxMeta.injector.getInstance(SpoofaxGradleConfigOverrides::class.java)
+
+  val sptRunner: SPTRunner get() = sptInjector.getInstance(SPTRunner::class.java)
+
+  override fun close() {
+    spoofaxInternal.getAndUpdate { null }?.close()
+    spoofaxMetaInternal.getAndUpdate { null }?.close()
+    sptInjectorInternal.getAndUpdate { null }
+  }
+
+  private val spoofaxInternal: AtomicReference<Spoofax> = AtomicReference(null)
+  private val spoofaxMetaInternal: AtomicReference<SpoofaxMeta> = AtomicReference(null)
+  private val sptInjectorInternal: AtomicReference<Injector> = AtomicReference(null)
+
+  private fun createSpoofax() = Spoofax(NullModulePluginLoader(), SpoofaxGradleModule(), SpoofaxExtensionModule(), org.metaborg.spoofax.meta.core.SpoofaxExtensionModule(), org.metaborg.spt.core.SpoofaxExtensionModule())
+  private fun createSpoofaxMeta() = SpoofaxMeta(spoofax, NullModulePluginLoader(), SpoofaxGradleMetaModule())
+  private fun createSptInjector() = spoofaxMeta.injector.createChildInjector(SPTModule())
 }
 
 // Use a null module plugin loader for Spoofax & SpoofaxMeta, as service loading does not work well in a Gradle environment.

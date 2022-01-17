@@ -53,6 +53,8 @@ if(standaloneBuild) { // If standalone build, apply additional plugins and set d
       }
       // Enable zip64 to support ZIP files with more than 2^16 entries, which we need.
       isZip64 = true
+      // Allow duplicates, as Spoofax 2 has several duplicate things on the classpath.
+      duplicatesStrategy = DuplicatesStrategy.INCLUDE
     }
   }
 } else {

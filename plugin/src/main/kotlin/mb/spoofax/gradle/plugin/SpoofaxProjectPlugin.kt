@@ -4,15 +4,13 @@ import mb.spoofax.gradle.task.registerSpoofaxBuildTask
 import mb.spoofax.gradle.task.registerSpoofaxCleanTask
 import mb.spoofax.gradle.task.registerSpoofaxTestTask
 import mb.spoofax.gradle.util.SpoofaxInstance
-import mb.spoofax.gradle.util.SpoofaxInstanceCache
+import mb.spoofax.gradle.util.configureSafely
+import mb.spoofax.gradle.util.finalizeAndGet
 import mb.spoofax.gradle.util.getProject
 import mb.spoofax.gradle.util.getProjectLocation
 import mb.spoofax.gradle.util.lazyLoadDialects
 import mb.spoofax.gradle.util.lazyLoadLanguages
-import mb.spoofax.gradle.util.lazyOverrideDependenciesInConfig
-import mb.spoofax.gradle.util.overrideIdentifiers
-import mb.spoofax.gradle.util.overrideMetaborgVersion
-import mb.spoofax.gradle.util.recreateProject
+import mb.spoofax.gradle.util.lazyOverrideConfig
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.plugins.JavaPlugin
@@ -45,67 +43,59 @@ class SpoofaxProjectPlugin : Plugin<Project> {
     project.pluginManager.apply(LifecycleBasePlugin::class)
     project.pluginManager.apply(SpoofaxBasePlugin::class)
 
-    val instance = SpoofaxInstanceCache[project]
-    instance.reset()
-    instance.spoofax.recreateProject(project)
-
     val extension = SpoofaxProjectExtension(project)
     project.extensions.add("spoofaxProject", extension)
 
     project.afterEvaluate {
-      configureAfterEvaluate(this, extension, instance)
-    }
-
-    project.gradle.buildFinished {
-      instance.reset()
+      configureAfterEvaluate(this, extension)
     }
   }
 
-  private fun configureAfterEvaluate(project: Project, extension: SpoofaxProjectExtension, spoofaxInstance: SpoofaxInstance) {
-    configureProjectAfterEvaluate(project, extension, spoofaxInstance)
-    configureBuildTask(project, extension, spoofaxInstance)
-    configureCleanTask(project, extension, spoofaxInstance)
-    configureTestTask(project, extension, spoofaxInstance)
+  private fun configureAfterEvaluate(project: Project, extension: SpoofaxProjectExtension) {
+    configureProjectAfterEvaluate(project, extension)
+    configureBuildTask(project, extension)
+    project.tasks.registerSpoofaxCleanTask()
+    configureTestTask(project, extension)
   }
 
-  private fun configureProjectAfterEvaluate(project: Project, extension: SpoofaxProjectExtension, spoofaxInstance: SpoofaxInstance) {
-    // Override the metaborgVersion and language identifier in the configuration, with values from the extension.
-    extension.spoofax2Version.finalizeValue()
-    extension.overrideMetaborgVersion(extension.spoofax2Version.get())
-    extension.overrideIdentifiers()
-
-    // Add dependencies to corresponding configurations.
-    val spoofaxProject = spoofaxInstance.spoofax.getProject(project)
-    extension.addDependenciesToProject(spoofaxProject.config())
+  private fun configureProjectAfterEvaluate(project: Project, extension: SpoofaxProjectExtension) {
+    // Add a dependency to Spoofax core.
+    extension.addSpoofaxCoreDependency()
+    // Add the Spoofax repository.
+    extension.addSpoofaxRepository()
+    // Add dependencies to corresponding configurations. // HACK: use shared Spoofax instance.
+    extension.addDependenciesToProject(SpoofaxInstance.getShared(project.gradle).spoofax.getProject(project).config())
   }
 
-  private fun configureBuildTask(project: Project, extension: SpoofaxProjectExtension, spoofaxInstance: SpoofaxInstance) {
-    val languageFiles = project.languageFiles
-    val task = project.tasks.registerSpoofaxBuildTask(spoofaxInstance.spoofax, { spoofaxInstance.spoofax.getProject(project) }, "spoofaxBuild")
-    task.configure {
+  private fun configureBuildTask(project: Project, extension: SpoofaxProjectExtension) {
+    val task = project.tasks.registerSpoofaxBuildTask()
+    task.configureSafely {
       // Task dependencies:
-      // 1. Language files, which influences which languages are loaded.
-      dependsOn(languageFiles)
+      // - Language files, which influences which languages are loaded.
+      val languageFiles = project.languageFiles
+      dependsOn(languageFiles.allDependencies)
       inputs.files({ languageFiles }) // Closure to defer to task execution time.
       // TODO: Stratego dialects through *.tbl files in non-output directories
       // Inputs:
-      // * Any file in the project directory, with matching include and exclude patterns.
+      // - Any file in the project directory, with matching include and exclude patterns.
       inputs.files(project.fileTree(".") {
         include(*extension.inputIncludePatterns.get().toTypedArray())
         exclude(*extension.inputExcludePatterns.get().toTypedArray())
       })
       // Outputs:
-      // * Any file in the project directory, with matching include and exclude patterns.
+      // - Any file in the project directory, with matching include and exclude patterns.
       outputs.files(project.fileTree(".") {
         include(*extension.outputIncludePatterns.get().toTypedArray())
         exclude(*extension.outputExcludePatterns.get().toTypedArray())
       })
 
       doFirst {
-        // Requires configuration override, languages, and dialects to be loaded.
-        lazyOverrideDependenciesInConfig(extension)
-        lazyLoadLanguages(languageFiles, project, spoofaxInstance.spoofax)
-        lazyLoadDialects(spoofaxInstance.spoofax.getProjectLocation(project), project, spoofaxInstance.spoofax)
+        // Fist override configuration, and load languages and dialects
+        spoofaxBuildService.finalizeAndGet().run {
+          lazyOverrideConfig(extension, configOverrides, spoofax)
+          lazyLoadLanguages(project.languageFiles, project, spoofax)
+          lazyLoadDialects(spoofax.getProjectLocation(project), project, spoofax)
+        }
       }
     }
     project.tasks.getByName(LifecycleBasePlugin.BUILD_TASK_NAME).dependsOn(task)
@@ -115,51 +105,29 @@ class SpoofaxProjectPlugin : Plugin<Project> {
     }
   }
 
-  private fun configureCleanTask(project: Project, extension: SpoofaxProjectExtension, spoofaxInstance: SpoofaxInstance) {
-    val spoofaxProject = spoofaxInstance.spoofax.getProject(project)
-    val languageFiles = project.languageFiles
-    val task = project.tasks.registerSpoofaxCleanTask(spoofaxInstance.spoofax, spoofaxProject)
-    task.configure {
-      // Task dependencies:
-      // 1. Language files, which influences which languages are loaded.
-      dependsOn(languageFiles)
-      inputs.files({ languageFiles }) // Closure to defer to task execution time.
-      // TODO: Stratego dialects through *.tbl files in non-output directories
-
-      doFirst {
-        // Requires configuration override, languages, and dialects to be loaded.
-        lazyOverrideDependenciesInConfig(extension)
-        lazyLoadLanguages(languageFiles, project, spoofaxInstance.spoofax)
-        lazyLoadDialects(spoofaxProject.location(), project, spoofaxInstance.spoofax)
-      }
-    }
-    project.tasks.getByName(LifecycleBasePlugin.CLEAN_TASK_NAME).dependsOn(task)
-  }
-
   private fun configureTestTask(
     project: Project,
-    extension: SpoofaxProjectExtension,
-    spoofaxInstance: SpoofaxInstance
+    extension: SpoofaxProjectExtension
   ) {
-    val spoofaxProject = spoofaxInstance.spoofax.getProject(project)
-    val languageFiles = project.languageFiles
-    val task = project.tasks.registerSpoofaxTestTask(spoofaxInstance.spoofax, spoofaxInstance.sptInjector, { spoofaxInstance.spoofax.getProject(project) })
-    task.configure {
+    project.tasks.registerSpoofaxTestTask().configureSafely {
       // Task dependencies:
-      // 1. Language files, which influences which languages are loaded.
-      dependsOn(languageFiles)
+      // - Language files, which influences which languages are loaded.
+      val languageFiles = project.languageFiles
+      dependsOn(languageFiles.allDependencies)
       inputs.files({ languageFiles }) // Closure to defer to task execution time.
+      // TODO: Stratego dialects through *.tbl files in non-output directories
 
       // Test the specified language under test.
       languageUnderTest.set(extension.languageUnderTest)
 
       doFirst {
-        // Requires configuration override, languages, and dialects to be loaded.
-        lazyOverrideDependenciesInConfig(extension)
-        lazyLoadLanguages(languageFiles, project, spoofaxInstance.spoofax)
-        lazyLoadDialects(spoofaxProject.location(), project, spoofaxInstance.spoofax)
+        // Fist override configuration, and load languages and dialects
+        spoofaxBuildService.finalizeAndGet().run {
+          lazyOverrideConfig(extension, configOverrides, spoofax)
+          lazyLoadLanguages(project.languageFiles, project, spoofax)
+          lazyLoadDialects(spoofax.getProjectLocation(project), project, spoofax)
+        }
       }
     }
-    project.tasks.getByName(LifecycleBasePlugin.CHECK_TASK_NAME).dependsOn(task)
   }
 }

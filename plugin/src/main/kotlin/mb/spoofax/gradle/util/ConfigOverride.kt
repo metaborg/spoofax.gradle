@@ -5,10 +5,10 @@ import mb.spoofax.gradle.plugin.compileLanguageFiles
 import mb.spoofax.gradle.plugin.sourceLanguageFiles
 import org.apache.commons.configuration2.HierarchicalConfiguration
 import org.apache.commons.configuration2.tree.ImmutableNode
+import org.apache.commons.vfs2.FileName
 import org.apache.commons.vfs2.FileObject
 import org.gradle.api.Project
 import org.gradle.api.plugins.JavaPlugin
-import org.metaborg.core.MetaborgConstants
 import org.metaborg.core.config.AConfigurationReaderWriter
 import org.metaborg.core.config.ConfigRequest
 import org.metaborg.core.config.ILanguageComponentConfig
@@ -30,6 +30,7 @@ import org.metaborg.spoofax.meta.core.config.SpoofaxLanguageSpecConfig
 import org.metaborg.spoofax.meta.core.config.SpoofaxLanguageSpecConfigBuilder
 import org.metaborg.spoofax.meta.core.config.SpoofaxLanguageSpecConfigService
 import org.metaborg.spoofax.meta.core.config.StrategoFormat
+import java.io.File
 import javax.inject.Inject
 
 data class ConfigOverride(
@@ -51,14 +52,12 @@ data class ConfigOverride(
       val newIdentifier = LanguageIdentifier(groupId ?: originalIdentifier.groupId, id ?: originalIdentifier.id, version
         ?: originalIdentifier.version)
       config.setProperty("id", newIdentifier)
-
-      config.setProperty("contributions", languageComponentConfig.langContribs().map {
-        if(it.id == originalIdentifier) {
-          LanguageContributionIdentifier(newIdentifier, it.name)
-        } else {
-          it
+      for(subConfig in config.configurationsAt("contributions", true)) {
+        val idString = subConfig.getString("id")
+        if(idString == originalIdentifier.toString()) {
+          subConfig.setProperty("id", newIdentifier)
         }
-      }.toMutableList())
+      }
     }
     if(!compileDeps.isEmpty()) {
       config.setProperty("dependencies.compile", compileDeps)
@@ -75,13 +74,13 @@ data class ConfigOverride(
   }
 }
 
-internal fun SpoofaxExtensionBase.overrideMetaborgVersion(metaborgVersion: String?) {
+internal fun SpoofaxExtensionBase.overrideMetaborgVersion(metaborgVersion: String?, configOverrides: SpoofaxGradleConfigOverrides) {
   configOverrides.update(project) {
     this.metaborgVersion = metaborgVersion
   }
 }
 
-internal fun SpoofaxExtensionBase.overrideIdentifiers() {
+internal fun SpoofaxExtensionBase.overrideIdentifiers(configOverrides: SpoofaxGradleConfigOverrides) {
   configOverrides.update(project) {
     groupId = project.group.toString()
     id = project.name
@@ -90,7 +89,7 @@ internal fun SpoofaxExtensionBase.overrideIdentifiers() {
   }
 }
 
-internal fun SpoofaxExtensionBase.overrideDependencies() {
+internal fun SpoofaxExtensionBase.overrideDependencies(configOverrides: SpoofaxGradleConfigOverrides) {
   configOverrides.update(project) {
     compileDeps = project.compileLanguageFiles.resolvedConfiguration.firstLevelModuleDependencies.map {
       it.toSpoofaxDependency()
@@ -106,7 +105,7 @@ internal fun SpoofaxExtensionBase.overrideDependencies() {
   }
 }
 
-internal fun SpoofaxExtensionBase.overrideStrategoFormat(strategoFormat: StrategoFormat) {
+internal fun SpoofaxExtensionBase.overrideStrategoFormat(strategoFormat: StrategoFormat, configOverrides: SpoofaxGradleConfigOverrides) {
   configOverrides.update(project) {
     this.strategoFormat = strategoFormat
   }
@@ -119,12 +118,16 @@ internal class SpoofaxGradleConfigOverrides @Inject constructor(
   private val languageComponentConfigService: SpoofaxGradleLanguageComponentConfigService,
   private val languageSpecConfigService: SpoofaxGradleLanguageSpecConfigService
 ) {
-  private val overrides = mutableMapOf<Project, ConfigOverride>()
+  private val overrides = mutableMapOf<File, ConfigOverride>()
 
   fun update(project: Project, fn: ConfigOverride.() -> Unit) {
-    val override = overrides.getOrPut(project) { ConfigOverride() }
+    update(project.projectDir, fn)
+  }
+
+  fun update(projectDir: File, fn: ConfigOverride.() -> Unit) {
+    val override = overrides.getOrPut(projectDir) { ConfigOverride() }
     override.fn()
-    val projectLoc = resourceService.resolve(project.projectDir)
+    val projectLoc = resourceService.resolve(projectDir)
     projectConfigService.setOverride(projectLoc, override)
     languageComponentConfigService.setOverride(projectLoc, override)
     languageSpecConfigService.setOverride(projectLoc, override)
@@ -136,16 +139,16 @@ internal class SpoofaxGradleProjectConfigService @Inject constructor(
   configReaderWriter: AConfigurationReaderWriter,
   private val configBuilder: SpoofaxProjectConfigBuilder
 ) : SpoofaxProjectConfigService(configReaderWriter, configBuilder) {
-  private val overrides = mutableMapOf<FileObject, ConfigOverride>()
+  private val overrides = mutableMapOf<FileName, ConfigOverride>()
 
   fun setOverride(projectLoc: FileObject, override: ConfigOverride) {
     val configFile = getConfigFile(projectLoc)
-    overrides[configFile] = override
+    overrides[configFile.name] = override
   }
 
   override fun toConfig(config: HierarchicalConfiguration<ImmutableNode>, configFile: FileObject): ConfigRequest<ISpoofaxProjectConfig> {
     val projectConfig = SpoofaxProjectConfig(config)
-    overrides[configFile]?.applyToConfig(config, null)
+    overrides[configFile.name]?.applyToConfig(config, null)
     val mb = MessageBuilder.create().asError().asInternal().withSource(configFile)
     val messages = projectConfig.validate(mb)
     return ConfigRequest(projectConfig, messages)
@@ -165,17 +168,17 @@ internal class SpoofaxGradleLanguageComponentConfigService @Inject constructor(
   configReaderWriter: AConfigurationReaderWriter,
   private val configBuilder: LanguageComponentConfigBuilder
 ) : LanguageComponentConfigService(configReaderWriter, configBuilder) {
-  private val overrides = mutableMapOf<FileObject, ConfigOverride>()
+  private val overrides = mutableMapOf<FileName, ConfigOverride>()
 
   fun setOverride(projectLoc: FileObject, override: ConfigOverride) {
     val configFile = getConfigFile(projectLoc)
-    overrides[configFile] = override
+    overrides[configFile.name] = override
   }
 
   override fun toConfig(config: HierarchicalConfiguration<ImmutableNode>, configFile: FileObject): ConfigRequest<ILanguageComponentConfig> {
     val projectConfig = ProjectConfig(config)
     val languageComponentConfig = LanguageComponentConfig(config, projectConfig)
-    overrides[configFile]?.applyToConfig(config, languageComponentConfig)
+    overrides[configFile.name]?.applyToConfig(config, languageComponentConfig)
     val mb = MessageBuilder.create().asError().asInternal().withSource(configFile)
     val messages = languageComponentConfig.validate(mb)
     return ConfigRequest(languageComponentConfig, messages)
@@ -195,17 +198,17 @@ internal class SpoofaxGradleLanguageSpecConfigService @Inject constructor(
   configReaderWriter: AConfigurationReaderWriter,
   private val configBuilder: SpoofaxLanguageSpecConfigBuilder
 ) : SpoofaxLanguageSpecConfigService(configReaderWriter, configBuilder) {
-  private val overrides = mutableMapOf<FileObject, ConfigOverride>()
+  private val overrides = mutableMapOf<FileName, ConfigOverride>()
 
   fun setOverride(projectLoc: FileObject, override: ConfigOverride) {
     val configFile = getConfigFile(projectLoc)
-    overrides[configFile] = override
+    overrides[configFile.name] = override
   }
 
   override fun toConfig(config: HierarchicalConfiguration<ImmutableNode>, configFile: FileObject): ConfigRequest<ISpoofaxLanguageSpecConfig> {
     val projectConfig = SpoofaxProjectConfig(config)
     val languageSpecConfig = SpoofaxLanguageSpecConfig(config, projectConfig)
-    overrides[configFile]?.applyToConfig(config, languageSpecConfig)
+    overrides[configFile.name]?.applyToConfig(config, languageSpecConfig)
     val mb = MessageBuilder.create().asError().asInternal().withSource(configFile)
     val messages = languageSpecConfig.validate(mb)
     return ConfigRequest(languageSpecConfig, messages)

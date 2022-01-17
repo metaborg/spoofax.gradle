@@ -1,8 +1,6 @@
 package mb.spoofax.gradle.plugin
 
-import mb.spoofax.gradle.util.SpoofaxGradleConfigOverrides
-import mb.spoofax.gradle.util.SpoofaxInstance
-import mb.spoofax.gradle.util.SpoofaxInstanceCache
+import mb.spoofax.gradle.util.finalizeAndGet
 import mb.spoofax.gradle.util.toGradleDependency
 import org.gradle.api.Project
 import org.gradle.api.plugins.JavaPlugin
@@ -27,7 +25,8 @@ open class SpoofaxExtensionBase internal constructor(internal val project: Proje
   init {
     val configProperties = configProperties()
     spoofax2Version.convention(configProperties["spoofax2Version"]?.toString() ?: MetaborgConstants.METABORG_VERSION)
-    spoofax2CoreDependency.convention(configProperties["spoofax2CoreDependency"]?.toString() ?: "org.metaborg:org.metaborg.spoofax.core:$spoofax2Version")
+    spoofax2CoreDependency.convention(configProperties["spoofax2CoreDependency"]?.toString()
+      ?: "org.metaborg:org.metaborg.spoofax.core:$spoofax2Version")
     addCompileDependenciesFromMetaborgYaml.convention(true)
     addSourceDependenciesFromMetaborgYaml.convention(true)
     addJavaDependenciesFromMetaborgYaml.convention(true)
@@ -35,28 +34,20 @@ open class SpoofaxExtensionBase internal constructor(internal val project: Proje
     addSpoofaxRepository.convention(true)
   }
 
-
-  internal val instance: SpoofaxInstance get() = SpoofaxInstanceCache[project]
-
-  internal val configOverrides: SpoofaxGradleConfigOverrides get() = instance.spoofaxMeta.injector.getInstance(SpoofaxGradleConfigOverrides::class.java)
-
   internal fun addDependenciesToProject(config: IProjectConfig) {
-    addCompileDependenciesFromMetaborgYaml.finalizeValue()
-    if(addCompileDependenciesFromMetaborgYaml.get()) {
+    if(addCompileDependenciesFromMetaborgYaml.finalizeAndGet()) {
       for(langId in config.compileDeps()) {
         val dependency = langId.toGradleDependency(project)
         project.dependencies.add(project.compileLanguage.name, dependency)
       }
     }
-    addSourceDependenciesFromMetaborgYaml.finalizeValue()
-    if(addSourceDependenciesFromMetaborgYaml.get()) {
+    if(addSourceDependenciesFromMetaborgYaml.finalizeAndGet()) {
       for(langId in config.sourceDeps()) {
         val dependency = langId.toGradleDependency(project)
         project.dependencies.add(project.sourceLanguage.name, dependency)
       }
     }
-    addJavaDependenciesFromMetaborgYaml.finalizeValue()
-    if(addJavaDependenciesFromMetaborgYaml.get() && project.plugins.hasPlugin(JavaPlugin::class.java)) {
+    if(addJavaDependenciesFromMetaborgYaml.finalizeAndGet() && project.plugins.hasPlugin(JavaPlugin::class.java)) {
       for(id in config.javaDeps()) {
         val dependency = id.toGradleDependency(project)
         project.configurations.getByName(JavaPlugin.COMPILE_ONLY_CONFIGURATION_NAME).dependencies.add(dependency)
@@ -65,15 +56,13 @@ open class SpoofaxExtensionBase internal constructor(internal val project: Proje
   }
 
   internal fun addSpoofaxCoreDependency() {
-    spoofax2CoreDependency.finalizeValue()
-    if(addSpoofaxCoreDependency.get() && project.plugins.hasPlugin(JavaPlugin::class.java)) {
-      project.configurations.getByName(JavaPlugin.COMPILE_ONLY_CONFIGURATION_NAME).dependencies.add(project.dependencies.create(spoofax2CoreDependency.get()))
+    if(addSpoofaxCoreDependency.finalizeAndGet() && project.plugins.hasPlugin(JavaPlugin::class.java)) {
+      project.configurations.getByName(JavaPlugin.COMPILE_ONLY_CONFIGURATION_NAME).dependencies.add(project.dependencies.create(spoofax2CoreDependency.finalizeAndGet()))
     }
   }
 
   internal fun addSpoofaxRepository() {
-    addSpoofaxRepository.finalizeValue()
-    if(addSpoofaxRepository.get()) {
+    if(addSpoofaxRepository.finalizeAndGet()) {
       project.repositories {
         maven("https://artifacts.metaborg.org/content/groups/public/")
       }

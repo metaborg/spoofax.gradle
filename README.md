@@ -9,7 +9,7 @@ Spoofax Gradle is a Gradle plugin for building and using Spoofax language specif
 
 ## Requirements
 
-Gradle 5.3 or higher is required.
+Gradle 6.1 or higher is required.
 The following code snippets assume you are using Gradle with Kotlin, but should be translatable to Groovy as well.
 
 ## Prerequisites
@@ -25,25 +25,22 @@ pluginManagement {
 }
 ```
 
-If you are on Gradle 5.3-5.6, Gradle metadata needs to be enabled. Add the following line to your settings.gradle(.kts) file:
-
-```kotlin
-enableFeaturePreview("GRADLE_METADATA")
-```
-
 ## Spoofax version
 
 Due to the complex nature of language development and Spoofax's API, this plugin only works with the single version of Spoofax it was built for.
+The supported Gradle versions have also changed over time.
 The following table lists the supported versions:
 
-| Spoofax Gradle Plugin | Spoofax |
-|-----------------------|---------|
-| 0.3.6-0.3.10          | 2.5.9   |
-| 0.4.0-0.4.1           | 2.5.10  |
-| 0.4.2-0.4.4           | 2.5.11  |
-| 0.4.5-0.4.9           | 2.5.12  |
-| 0.5.0                 | 2.5.14  |
-| 0.5.1-latest          | 2.5.15  |
+| Spoofax Gradle Plugin | Spoofax | Gradle    |
+|-----------------------|---------|-----------|
+| 0.3.6-0.3.10          | 2.5.9   | 5.3-6.9.2 |
+| 0.4.0-0.4.1           | 2.5.10  | 5.3-6.9.2 |
+| 0.4.2-0.4.4           | 2.5.11  | 5.3-6.9.2 |
+| 0.4.5-0.4.9           | 2.5.12  | 5.3-6.9.2 |
+| 0.5.0                 | 2.5.14  | 5.3-6.9.2 |
+| 0.5.1                 | 2.5.15  | 5.3-6.9.2 |
+| 0.5.2                 | 2.5.16  | 5.3-6.9.2 |
+| 0.5.3-latest          | 2.5.16  | 6.1+      |
 
 The latest version of the plugin can be found at the top of this readme.
 
