@@ -15,6 +15,7 @@ import mb.spoofax.gradle.util.lazyLoadCompiledLanguage
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.plugins.JavaLibraryPlugin
+import org.gradle.api.provider.ListProperty
 import org.gradle.api.provider.Property
 import org.gradle.api.provider.SetProperty
 import org.gradle.api.publish.PublishingExtension
@@ -24,6 +25,7 @@ import org.gradle.api.tasks.SourceSetContainer
 import org.gradle.api.tasks.TaskProvider
 import org.gradle.kotlin.dsl.*
 import org.gradle.language.base.plugins.LifecycleBasePlugin
+import org.metaborg.core.language.LanguageContributionIdentifier
 import org.metaborg.core.language.LanguageIdentifier
 import org.metaborg.core.language.LanguageVersion
 import org.metaborg.spoofax.meta.core.config.StrategoFormat
@@ -48,6 +50,9 @@ open class SpoofaxLangSpecExtension(project: Project) : SpoofaxExtensionBase(pro
 
   val otherApproximateDependencies: Property<Boolean> = project.objects.property()
 
+  val addLanguageContributionsFromMetaborgYaml: Property<Boolean> = project.objects.property()
+  val languageContributions: ListProperty<LanguageContributionIdentifier> = project.objects.listProperty()
+
   init {
     createPublication.convention(true)
     buildExamples.convention(false)
@@ -68,6 +73,8 @@ open class SpoofaxLangSpecExtension(project: Project) : SpoofaxExtensionBase(pro
     spoofaxBuildConservativeOutputExcludePatterns.convention(sharedOutputExcludes)
 
     otherApproximateDependencies.convention(true)
+
+    addLanguageContributionsFromMetaborgYaml.convention(true)
   }
 }
 
@@ -99,8 +106,7 @@ class SpoofaxLanguageSpecificationPlugin : Plugin<Project> {
         srcDir("src-gen/java")
         srcDir("src-gen/ds-java")
         // Spoofax build expects compiled Java classes in (Maven-style) 'target/classes' directory.
-        @Suppress("UnstableApiUsage")
-        outputDir = File(project.projectDir, "target/classes")
+        destinationDirectory.set(File(project.projectDir, "target/classes"))
       }
     }
   }

@@ -16,19 +16,15 @@ import java.io.File
 
 internal fun lazyOverrideConfig(extension: SpoofaxExtensionBase, configOverrides: SpoofaxGradleConfigOverrides, spoofax: Spoofax) =
   lazilyDo(extension.project, "overrodeDependenciesInConfig") {
-    // Override the metaborgVersion, language identifier, and the Stratego format in the configuration, with values from the extension.
-    extension.overrideMetaborgVersion(extension.spoofax2Version.finalizeAndGet(), configOverrides)
+    // Override the metaborgVersion, language identifier, the Stratego format, and language contributions in the configuration, with values from the extension.
+    extension.overrideMetaborgVersion(configOverrides)
     extension.overrideIdentifiers(configOverrides)
     if(extension is SpoofaxLangSpecExtension) { // HACK: cast. put this somewhere else
-      extension.strategoFormat.finalizeValue()
-      if(extension.strategoFormat.isPresent) {
-        extension.overrideStrategoFormat(extension.strategoFormat.get(), configOverrides)
-      }
+      extension.overrideStrategoFormat(configOverrides)
+      extension.overrideLanguageContributions(configOverrides)
     }
-
     // Override dependencies
     extension.overrideDependencies(configOverrides)
-
     // Recreate project to force configuration to be updated.
     spoofax.recreateProject(extension.project)
   }
@@ -54,7 +50,7 @@ internal fun lazyLoadDialects(projectLoc: FileObject, project: Project, spoofax:
 
 internal fun lazyLoadCompiledLanguage(archiveLoc: FileObject, project: Project, spoofax: Spoofax) =
   lazilyDo(project, "loadedCompiledLanguage") {
-    spoofax.languageDiscoveryService.languageFromArchive(archiveLoc)
+    spoofax.languageDiscoveryService.languagesFromArchive(archiveLoc)
   }
 
 internal fun lazyLoadCompiledLanguage(archiveFile: File, project: Project, spoofax: Spoofax) =

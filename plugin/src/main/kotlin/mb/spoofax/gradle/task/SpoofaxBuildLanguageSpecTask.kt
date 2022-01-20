@@ -50,6 +50,8 @@ abstract class SpoofaxBuildLanguageSpecTask : SpoofaxTask() {
     inputs.property("spoofaxBuildConservativeOutputExcludePatterns", extension.spoofaxBuildConservativeOutputExcludePatterns)
     inputs.property("strategoFormat", extension.strategoFormat).optional(true)
     inputs.property("otherApproximateDependencies", extension.otherApproximateDependencies)
+    inputs.property("addLanguageContributionsFromMetaborgYaml", extension.addLanguageContributionsFromMetaborgYaml)
+    inputs.property("languageContributions", extension.languageContributions)
     // 4. Gradle group/name/version influences the `metaborg.component.yaml` file.
     inputs.property("group", project.group.toString())
     inputs.property("name", project.name)
@@ -90,7 +92,7 @@ abstract class SpoofaxBuildLanguageSpecTask : SpoofaxTask() {
     }
 
     // Task that compiles Java sources depends on this task, as this task may generate Java source files.
-    project.tasks.getByName(JavaPlugin.COMPILE_JAVA_TASK_NAME).dependsOn(this)
+    project.tasks.named(JavaPlugin.COMPILE_JAVA_TASK_NAME).configure { dependsOn(this@SpoofaxBuildLanguageSpecTask) }
   }
 
   @TaskAction

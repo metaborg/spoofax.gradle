@@ -1,6 +1,7 @@
 package mb.spoofax.gradle.util
 
 import mb.spoofax.gradle.plugin.SpoofaxExtensionBase
+import mb.spoofax.gradle.plugin.SpoofaxLangSpecExtension
 import mb.spoofax.gradle.plugin.compileLanguageFiles
 import mb.spoofax.gradle.plugin.sourceLanguageFiles
 import org.apache.commons.configuration2.HierarchicalConfiguration
@@ -38,6 +39,8 @@ data class ConfigOverride(
   var groupId: String? = null,
   var id: String? = null,
   var version: LanguageVersion? = null,
+  var useExistingLanguageContributions: Boolean = true,
+  var languageContributions: Collection<LanguageContributionIdentifier> = mutableListOf(),
   var compileDeps: Collection<LanguageIdentifier> = mutableListOf(),
   var sourceDeps: Collection<LanguageIdentifier> = mutableListOf(),
   var javaDeps: Collection<LanguageIdentifier> = mutableListOf(),
@@ -52,11 +55,20 @@ data class ConfigOverride(
       val newIdentifier = LanguageIdentifier(groupId ?: originalIdentifier.groupId, id ?: originalIdentifier.id, version
         ?: originalIdentifier.version)
       config.setProperty("id", newIdentifier)
-      for(subConfig in config.configurationsAt("contributions", true)) {
-        val idString = subConfig.getString("id")
-        if(idString == originalIdentifier.toString()) {
-          subConfig.setProperty("id", newIdentifier)
+
+      if(useExistingLanguageContributions) {
+        for(subConfig in config.configurationsAt("contributions", true)) {
+          val idString = subConfig.getString("id")
+          if(idString == originalIdentifier.toString()) {
+            subConfig.setProperty("id", newIdentifier)
+          }
         }
+      } else {
+        config.clearTree("contributions")
+      }
+      for(languageContribution in languageContributions) {
+        config.addProperty("contributions(-1).name", languageContribution.name)
+        config.addProperty("contributions.id", languageContribution.id)
       }
     }
     if(!compileDeps.isEmpty()) {
@@ -74,9 +86,9 @@ data class ConfigOverride(
   }
 }
 
-internal fun SpoofaxExtensionBase.overrideMetaborgVersion(metaborgVersion: String?, configOverrides: SpoofaxGradleConfigOverrides) {
+internal fun SpoofaxExtensionBase.overrideMetaborgVersion(configOverrides: SpoofaxGradleConfigOverrides) {
   configOverrides.update(project) {
-    this.metaborgVersion = metaborgVersion
+    this.metaborgVersion = this@overrideMetaborgVersion.spoofax2Version.finalizeAndGet()
   }
 }
 
@@ -105,12 +117,27 @@ internal fun SpoofaxExtensionBase.overrideDependencies(configOverrides: SpoofaxG
   }
 }
 
-internal fun SpoofaxExtensionBase.overrideStrategoFormat(strategoFormat: StrategoFormat, configOverrides: SpoofaxGradleConfigOverrides) {
-  configOverrides.update(project) {
-    this.strategoFormat = strategoFormat
+internal fun SpoofaxLangSpecExtension.overrideStrategoFormat(configOverrides: SpoofaxGradleConfigOverrides) {
+  val strategoFormat = this@overrideStrategoFormat.strategoFormat
+  if(strategoFormat.isPresent) {
+    configOverrides.update(project) {
+      this.strategoFormat = strategoFormat.finalizeAndGet()
+    }
   }
 }
 
+internal fun SpoofaxLangSpecExtension.overrideLanguageContributions(configOverrides: SpoofaxGradleConfigOverrides) {
+  val addLanguageContributionsFromMetaborgYaml = addLanguageContributionsFromMetaborgYaml
+  val languageContributions = languageContributions
+  configOverrides.update(project) {
+    if(addLanguageContributionsFromMetaborgYaml.isPresent) {
+      this.useExistingLanguageContributions = addLanguageContributionsFromMetaborgYaml.finalizeAndGet()
+    }
+    if(languageContributions.isPresent) {
+      this.languageContributions = languageContributions.finalizeAndGet()
+    }
+  }
+}
 
 internal class SpoofaxGradleConfigOverrides @Inject constructor(
   private val resourceService: IResourceService,

@@ -28,3 +28,6 @@ fun String.includeProject(id: String, path: String = "$this/$id") {
 }
 
 include("stratego_format_override")
+
+include("language_contribution_override")
+include("language_contribution_addition")

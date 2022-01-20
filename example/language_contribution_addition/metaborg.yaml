@@ -1,0 +1,11 @@
+---
+id: org.metaborg:language_contribution_addition:0.1.0-SNAPSHOT
+name: language_contribution_addition
+contributions:
+  - name: language_contribution_addition
+    id: org.metaborg:language_contribution_addition:0.1.0-SNAPSHOT
+language:
+  sdf:
+    enabled: false
+  stratego:
+    enabled: false

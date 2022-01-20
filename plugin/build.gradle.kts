@@ -133,6 +133,7 @@ val generatePropertiesTask = tasks.register("generateConfigProperties") {
   }
 }
 tasks.compileJava.configure { dependsOn(generatePropertiesTask) }
+tasks.processResources.configure { dependsOn(generatePropertiesTask) }
 // Custom properties class that does not write the current date, fixing incrementality.
 class NonShittyProperties : java.util.Properties() {
   fun storeWithoutDate(writer: java.io.BufferedWriter) {

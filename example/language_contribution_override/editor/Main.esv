@@ -1,0 +1,5 @@
+module Main
+
+language
+
+  extensions : lco
