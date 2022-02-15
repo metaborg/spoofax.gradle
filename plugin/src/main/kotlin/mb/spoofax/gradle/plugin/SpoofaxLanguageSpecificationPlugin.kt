@@ -43,6 +43,9 @@ open class SpoofaxLangSpecExtension(project: Project) : SpoofaxExtensionBase(pro
   val defaultOutputExcludePatterns: SetProperty<String> = project.objects.setProperty()
 
   val spoofaxBuildApproximateDependencies: Property<Boolean> = project.objects.property()
+  val spoofaxBuildApproximateAdditionalInputExcludePatterns: SetProperty<String> = project.objects.setProperty()
+  val spoofaxBuildApproximateAdditionalOutputExcludePatterns: SetProperty<String> = project.objects.setProperty()
+
   val spoofaxBuildConservativeInputIncludePatterns: SetProperty<String> = project.objects.setProperty()
   val spoofaxBuildConservativeInputExcludePatterns: SetProperty<String> = project.objects.setProperty()
   val spoofaxBuildConservativeOutputIncludePatterns: SetProperty<String> = project.objects.setProperty()
@@ -67,6 +70,9 @@ open class SpoofaxLangSpecExtension(project: Project) : SpoofaxExtensionBase(pro
     defaultOutputExcludePatterns.convention(sharedOutputExcludes)
 
     spoofaxBuildApproximateDependencies.convention(true)
+    spoofaxBuildApproximateAdditionalInputExcludePatterns.convention(setOf())
+    spoofaxBuildApproximateAdditionalOutputExcludePatterns.convention(setOf())
+
     spoofaxBuildConservativeInputIncludePatterns.convention(setOf())
     spoofaxBuildConservativeInputExcludePatterns.convention(sharedInputExcludes)
     spoofaxBuildConservativeOutputIncludePatterns.convention(setOf())

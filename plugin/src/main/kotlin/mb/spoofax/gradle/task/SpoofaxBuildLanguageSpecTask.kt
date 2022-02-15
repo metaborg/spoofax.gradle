@@ -2,6 +2,7 @@ package mb.spoofax.gradle.task
 
 import mb.spoofax.gradle.plugin.SpoofaxLangSpecExtension
 import mb.spoofax.gradle.plugin.languageFiles
+import mb.spoofax.gradle.util.LoggingOutputStream
 import mb.spoofax.gradle.util.finalizeAndGet
 import mb.spoofax.gradle.util.getLanguageSpecification
 import mb.spoofax.gradle.util.getProjectLocation
@@ -9,6 +10,8 @@ import mb.spoofax.gradle.util.lazyLoadDialects
 import mb.spoofax.gradle.util.lazyLoadLanguages
 import mb.spoofax.gradle.util.lazyOverrideConfig
 import org.gradle.api.GradleException
+import org.gradle.api.logging.LogLevel
+import org.gradle.api.logging.configuration.ShowStacktrace
 import org.gradle.api.plugins.JavaPlugin
 import org.gradle.api.tasks.TaskAction
 import org.gradle.api.tasks.TaskContainer
@@ -70,6 +73,7 @@ abstract class SpoofaxBuildLanguageSpecTask : SpoofaxTask() {
           "**/*.nabl2", "**/*.stx", "**/*.ds", "**/*.tbl", "**/*.pp.af"
         )
         exclude(*extension.defaultInputExcludePatterns.get().toTypedArray())
+        exclude(*extension.spoofaxBuildApproximateAdditionalInputExcludePatterns.get().toTypedArray())
       })
       // TODO: included files that are not in the project directory?
 
@@ -77,7 +81,9 @@ abstract class SpoofaxBuildLanguageSpecTask : SpoofaxTask() {
       // - src-gen
       outputs.dir(srcGenDir)
       // - target/metaborg
-      outputs.dir(targetMetaborgDir)
+      outputs.files(project.fileTree(targetMetaborgDir) {
+        exclude(*extension.spoofaxBuildApproximateAdditionalOutputExcludePatterns.get().toTypedArray())
+      })
     } else {
       // Conservative inputs: any file in the project directory (not matching include exclude patterns).
       inputs.files(project.fileTree(".") {
@@ -120,7 +126,19 @@ abstract class SpoofaxBuildLanguageSpecTask : SpoofaxTask() {
       val inputBuilder = BuildInputBuilder(languageSpec).run {
         withSourcesFromDefaultSourceLocations(true)
         withSelector(SpoofaxIgnoresSelector())
-        withMessagePrinter(StreamMessagePrinter(sourceTextService, true, true, System.out, System.out, System.out))
+        val printExceptions = when(project.gradle.startParameter.showStacktrace) {
+          ShowStacktrace.INTERNAL_EXCEPTIONS -> false
+          ShowStacktrace.ALWAYS -> true
+          ShowStacktrace.ALWAYS_FULL -> true
+        }
+        withMessagePrinter(StreamMessagePrinter(
+          sourceTextService,
+          true,
+          printExceptions,
+          LoggingOutputStream(project.logger, LogLevel.INFO),
+          LoggingOutputStream(project.logger, LogLevel.WARN),
+          LoggingOutputStream(project.logger, LogLevel.ERROR)
+        ))
         withPardonedLanguageStrings(languageSpec.config().pardonedLanguages())
         addTransformGoal(CompileGoal())
       }

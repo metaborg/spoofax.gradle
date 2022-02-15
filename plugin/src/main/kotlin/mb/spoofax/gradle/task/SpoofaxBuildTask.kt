@@ -1,9 +1,12 @@
 package mb.spoofax.gradle.task
 
+import mb.spoofax.gradle.util.LoggingOutputStream
 import mb.spoofax.gradle.util.SpoofaxBuildService
 import mb.spoofax.gradle.util.finalizeAndGet
 import mb.spoofax.gradle.util.getProject
 import org.gradle.api.GradleException
+import org.gradle.api.logging.LogLevel
+import org.gradle.api.logging.configuration.ShowStacktrace
 import org.gradle.api.provider.ListProperty
 import org.gradle.api.provider.Property
 import org.gradle.api.tasks.Input
@@ -60,7 +63,19 @@ abstract class SpoofaxBuildTask : SpoofaxTask() {
         withDefaultIncludePaths(true)
         withSourcesFromDefaultSourceLocations(true)
         withSelector(SpoofaxIgnoresSelector())
-        withMessagePrinter(StreamMessagePrinter(sourceTextService, true, true, NullOutputStream(), NullOutputStream(), System.out))
+        val printExceptions = when(project.gradle.startParameter.showStacktrace) {
+          ShowStacktrace.INTERNAL_EXCEPTIONS -> false
+          ShowStacktrace.ALWAYS -> true
+          ShowStacktrace.ALWAYS_FULL -> true
+        }
+        withMessagePrinter(StreamMessagePrinter(
+          sourceTextService,
+          true,
+          printExceptions,
+          LoggingOutputStream(project.logger, LogLevel.INFO),
+          LoggingOutputStream(project.logger, LogLevel.WARN),
+          LoggingOutputStream(project.logger, LogLevel.ERROR)
+        ))
         withThrowOnErrors(true)
         if(pardonedLanguages.isNotEmpty()) {
           withPardonedLanguageStrings(pardonedLanguages)

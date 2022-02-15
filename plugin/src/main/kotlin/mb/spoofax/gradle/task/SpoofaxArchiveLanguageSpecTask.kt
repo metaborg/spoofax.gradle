@@ -65,11 +65,13 @@ abstract class SpoofaxArchiveLanguageSpecTask : SpoofaxTask() {
       // - Stratego and Stratego Java strategies compiled class files.
       inputs.files(project.fileTree("target/classes") {
         exclude("**/*.pp.af", "**/*.tbl") // Exclude pp.af and .tbl files as inputs, because this task copies them here.
+        exclude(*extension.spoofaxBuildApproximateAdditionalInputExcludePatterns.get().toTypedArray())
       }).optional() // Optional: not all language specs have a classes directory.
       // - pp.af and .tbl files (not in src-gen, build, or target) are included into the JAR file
       inputs.files(project.fileTree(".") {
         include("**/*.pp.af", "**/*.tbl")
         exclude(*extension.defaultInputExcludePatterns.get().toTypedArray())
+        exclude(*extension.spoofaxBuildApproximateAdditionalInputExcludePatterns.get().toTypedArray())
       }).optional() // Optional: not all language specs have pp.af or .tbl files.
       // - icons
       val iconsDir = projectDir.resolve("icons")
@@ -81,6 +83,10 @@ abstract class SpoofaxArchiveLanguageSpecTask : SpoofaxTask() {
       // - target/metaborg directory
       inputs.files(project.fileTree(targetMetaborgDir) {
         exclude("stratego.jar") // Exclude stratego.jar, as this task creates it.
+        // These table bin files sometimes changes after archiving, ignore them...
+        exclude("table.bin")
+        exclude("table-completions.bin")
+        exclude(*extension.spoofaxBuildApproximateAdditionalInputExcludePatterns.get().toTypedArray())
       })
       // TODO: exported files.
 
