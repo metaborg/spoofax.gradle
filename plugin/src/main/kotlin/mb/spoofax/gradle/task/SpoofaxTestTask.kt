@@ -23,11 +23,12 @@ import org.metaborg.core.MetaborgException
 import org.metaborg.core.language.LanguageIdentifier
 import org.metaborg.core.project.IProject
 import java.io.File
+import javax.inject.Inject
 
 fun TaskContainer.registerSpoofaxTestTask(extension: SpoofaxExtensionBase, name: String = "spoofaxTest"): TaskProvider<SpoofaxTestTask> =
   register(name, SpoofaxTestTask::class, extension)
 
-abstract class SpoofaxTestTask(@get:Internal val extension: SpoofaxExtensionBase) : SpoofaxTask() {
+abstract class SpoofaxTestTask @Inject constructor(@get:Internal val extension: SpoofaxExtensionBase) : SpoofaxTask() {
   // Internals
   @get:Internal
   abstract val spoofaxProjectSupplier: Property<SpoofaxBuildService.() -> IProject>
