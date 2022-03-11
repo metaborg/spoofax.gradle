@@ -5,6 +5,7 @@ import mb.spoofax.gradle.util.toGradleDependency
 import org.gradle.api.Project
 import org.gradle.api.plugins.JavaPlugin
 import org.gradle.api.provider.Property
+import org.gradle.api.provider.SetProperty
 import org.gradle.kotlin.dsl.*
 import org.metaborg.core.MetaborgConstants
 import org.metaborg.core.config.IProjectConfig
@@ -22,6 +23,13 @@ open class SpoofaxExtensionBase internal constructor(internal val project: Proje
   val addSpoofaxCoreDependency: Property<Boolean> = project.objects.property()
   val addSpoofaxRepository: Property<Boolean> = project.objects.property()
 
+  val sharedExcludes = setOf("/out", "/bin", "/.gradle", "/.git")
+  val sharedInputExcludes = setOf("/src-gen", "/target", "/build") + sharedExcludes
+  val sharedOutputExcludes = sharedExcludes
+
+  val defaultInputExcludePatterns: SetProperty<String> = project.objects.setProperty()
+  val defaultOutputExcludePatterns: SetProperty<String> = project.objects.setProperty()
+
   init {
     val configProperties = configProperties()
     spoofax2Version.convention(configProperties["spoofax2Version"]?.toString() ?: MetaborgConstants.METABORG_VERSION)
@@ -32,6 +40,9 @@ open class SpoofaxExtensionBase internal constructor(internal val project: Proje
     addJavaDependenciesFromMetaborgYaml.convention(true)
     addSpoofaxCoreDependency.convention(true)
     addSpoofaxRepository.convention(true)
+
+    defaultInputExcludePatterns.convention(sharedInputExcludes)
+    defaultOutputExcludePatterns.convention(sharedOutputExcludes)
   }
 
   internal fun addDependenciesToProject(config: IProjectConfig) {

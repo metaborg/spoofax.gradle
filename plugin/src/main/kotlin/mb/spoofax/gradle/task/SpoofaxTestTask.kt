@@ -1,6 +1,7 @@
 package mb.spoofax.gradle.task
 
 import mb.spoofax.gradle.plugin.SpoofaxBasePlugin
+import mb.spoofax.gradle.plugin.SpoofaxExtensionBase
 import mb.spoofax.gradle.plugin.sptLanguageFiles
 import mb.spoofax.gradle.util.SpoofaxBuildService
 import mb.spoofax.gradle.util.finalizeAndGet
@@ -23,10 +24,10 @@ import org.metaborg.core.language.LanguageIdentifier
 import org.metaborg.core.project.IProject
 import java.io.File
 
-fun TaskContainer.registerSpoofaxTestTask(name: String = "spoofaxTest"): TaskProvider<SpoofaxTestTask> =
-  register(name, SpoofaxTestTask::class)
+fun TaskContainer.registerSpoofaxTestTask(extension: SpoofaxExtensionBase, name: String = "spoofaxTest"): TaskProvider<SpoofaxTestTask> =
+  register(name, SpoofaxTestTask::class, extension)
 
-abstract class SpoofaxTestTask : SpoofaxTask() {
+abstract class SpoofaxTestTask(@get:Internal val extension: SpoofaxExtensionBase) : SpoofaxTask() {
   // Internals
   @get:Internal
   abstract val spoofaxProjectSupplier: Property<SpoofaxBuildService.() -> IProject>

@@ -39,9 +39,6 @@ open class SpoofaxLangSpecExtension(project: Project) : SpoofaxExtensionBase(pro
   val examplesDir: Property<String> = project.objects.property()
   val runTests: Property<Boolean> = project.objects.property()
 
-  val defaultInputExcludePatterns: SetProperty<String> = project.objects.setProperty()
-  val defaultOutputExcludePatterns: SetProperty<String> = project.objects.setProperty()
-
   val spoofaxBuildApproximateDependencies: Property<Boolean> = project.objects.property()
   val spoofaxBuildApproximateAdditionalInputExcludePatterns: SetProperty<String> = project.objects.setProperty()
   val spoofaxBuildApproximateAdditionalOutputExcludePatterns: SetProperty<String> = project.objects.setProperty()
@@ -61,13 +58,6 @@ open class SpoofaxLangSpecExtension(project: Project) : SpoofaxExtensionBase(pro
     buildExamples.convention(false)
     examplesDir.convention("example")
     runTests.convention(true)
-
-    val sharedExcludes = setOf("/out", "/bin", "/.gradle", "/.git")
-    val sharedInputExcludes = setOf("/src-gen", "/target", "/build") + sharedExcludes
-    val sharedOutputExcludes = sharedExcludes
-
-    defaultInputExcludePatterns.convention(sharedInputExcludes)
-    defaultOutputExcludePatterns.convention(sharedOutputExcludes)
 
     spoofaxBuildApproximateDependencies.convention(true)
     spoofaxBuildApproximateAdditionalInputExcludePatterns.convention(setOf())
@@ -131,8 +121,11 @@ class SpoofaxLanguageSpecificationPlugin : Plugin<Project> {
     val archiveTask = configureArchiveTask(project, languageIdentifier, archiveFile)
 
     val cleanTask = project.tasks.registerSpoofaxCleanTask()
+    cleanTask.configureSafely {
+      this.extension.set(extension)
+    }
     project.tasks.registerSpoofaxCleanLanguageSpecTask().configureSafely {
-      spoofaxCleanTask.set(cleanTask)
+      this.spoofaxCleanTask.set(cleanTask)
     }
 
     configureBuildExamplesTask(project, extension, archiveTask, languageIdentifier, archiveFile)
@@ -226,7 +219,7 @@ class SpoofaxLanguageSpecificationPlugin : Plugin<Project> {
     languageIdentifier: LanguageIdentifier,
     archiveFile: File
   ) {
-    project.tasks.registerSpoofaxTestTask().configureSafely {
+    project.tasks.registerSpoofaxTestTask(extension).configureSafely {
       // Only execute task if runTests is set to true.
       onlyIf { extension.runTests.finalizeValue(); extension.runTests.get() }
 

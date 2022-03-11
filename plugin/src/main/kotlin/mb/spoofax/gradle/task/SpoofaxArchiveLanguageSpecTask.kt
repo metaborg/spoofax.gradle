@@ -1,5 +1,6 @@
 package mb.spoofax.gradle.task
 
+import mb.spoofax.gradle.plugin.SpoofaxLangSpecExtension
 import mb.spoofax.gradle.plugin.languageFiles
 import mb.spoofax.gradle.util.finalizeAndGet
 import mb.spoofax.gradle.util.getLanguageSpecification
@@ -12,6 +13,7 @@ import org.gradle.api.GradleException
 import org.gradle.api.plugins.JavaPlugin
 import org.gradle.api.provider.Property
 import org.gradle.api.tasks.Input
+import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
 import org.gradle.api.tasks.TaskContainer
@@ -28,6 +30,10 @@ fun TaskContainer.registerSpoofaxArchiveLanguageSpecTask(name: String = "spoofax
   register(name, SpoofaxArchiveLanguageSpecTask::class)
 
 abstract class SpoofaxArchiveLanguageSpecTask : SpoofaxTask() {
+  @get:Internal
+  protected val langSpecExtension
+    get() = project.extensions.getByType<SpoofaxLangSpecExtension>()
+
   @get:Input
   abstract val languageIdentifier: Property<LanguageIdentifier>
 
@@ -50,28 +56,28 @@ abstract class SpoofaxArchiveLanguageSpecTask : SpoofaxTask() {
     // - Java compile task, which provides class files that are packaged with this task.
     dependsOn(project.tasks.named(JavaPlugin.COMPILE_JAVA_TASK_NAME))
     // - Extension properties
-    inputs.property("approximateSpoofaxBuildDependencies", extension.spoofaxBuildApproximateDependencies)
-    inputs.property("otherApproximateDependencies", extension.otherApproximateDependencies)
-    inputs.property("strategoFormat", extension.strategoFormat).optional(true)
+    inputs.property("approximateSpoofaxBuildDependencies", langSpecExtension.spoofaxBuildApproximateDependencies)
+    inputs.property("otherApproximateDependencies", langSpecExtension.otherApproximateDependencies)
+    inputs.property("strategoFormat", langSpecExtension.strategoFormat).optional(true)
     // - Gradle group/name/version influences the `metaborg.component.yaml` file.
     inputs.property("group", project.group.toString())
     inputs.property("name", project.name)
     inputs.property("version", project.version.toString())
 
     // General inputs and outputs:
-    if(extension.otherApproximateDependencies.get()) {
+    if(langSpecExtension.otherApproximateDependencies.get()) {
       // Approximate inputs/outputs:
       // Inputs:
       // - Stratego and Stratego Java strategies compiled class files.
       inputs.files(project.fileTree("target/classes") {
         exclude("**/*.pp.af", "**/*.tbl") // Exclude pp.af and .tbl files as inputs, because this task copies them here.
-        exclude(*extension.spoofaxBuildApproximateAdditionalInputExcludePatterns.get().toTypedArray())
+        exclude(*langSpecExtension.spoofaxBuildApproximateAdditionalInputExcludePatterns.get().toTypedArray())
       }).optional() // Optional: not all language specs have a classes directory.
       // - pp.af and .tbl files (not in src-gen, build, or target) are included into the JAR file
       inputs.files(project.fileTree(".") {
         include("**/*.pp.af", "**/*.tbl")
-        exclude(*extension.defaultInputExcludePatterns.get().toTypedArray())
-        exclude(*extension.spoofaxBuildApproximateAdditionalInputExcludePatterns.get().toTypedArray())
+        exclude(*langSpecExtension.defaultInputExcludePatterns.get().toTypedArray())
+        exclude(*langSpecExtension.spoofaxBuildApproximateAdditionalInputExcludePatterns.get().toTypedArray())
       }).optional() // Optional: not all language specs have pp.af or .tbl files.
       // - icons
       val iconsDir = projectDir.resolve("icons")
@@ -86,7 +92,7 @@ abstract class SpoofaxArchiveLanguageSpecTask : SpoofaxTask() {
         // These table bin files sometimes changes after archiving, ignore them...
         exclude("table.bin")
         exclude("table-completions.bin")
-        exclude(*extension.spoofaxBuildApproximateAdditionalInputExcludePatterns.get().toTypedArray())
+        exclude(*langSpecExtension.spoofaxBuildApproximateAdditionalInputExcludePatterns.get().toTypedArray())
       })
       // TODO: exported files.
 
@@ -96,11 +102,11 @@ abstract class SpoofaxArchiveLanguageSpecTask : SpoofaxTask() {
     } else {
       // Conservative inputs: any file in the project directory (not matching include exclude patterns).
       inputs.files(project.fileTree(".") {
-        exclude(*extension.defaultInputExcludePatterns.get().toTypedArray())
+        exclude(*langSpecExtension.defaultInputExcludePatterns.get().toTypedArray())
       })
       // Conservative outputs: any file in the project directory (not matching output exclude patterns).
       outputs.files(project.fileTree(".") {
-        exclude(*extension.defaultOutputExcludePatterns.get().toTypedArray())
+        exclude(*langSpecExtension.defaultOutputExcludePatterns.get().toTypedArray())
       })
     }
 
@@ -115,7 +121,7 @@ abstract class SpoofaxArchiveLanguageSpecTask : SpoofaxTask() {
     // Run package and archive part of the meta-build.
     spoofaxBuildService.run {
       // Fist override configuration, and load languages and dialects
-      lazyOverrideConfig(extension, configOverrides, spoofax)
+      lazyOverrideConfig(langSpecExtension, configOverrides, spoofax)
       lazyLoadLanguages(project.languageFiles, project, spoofax)
       lazyLoadDialects(spoofax.getProjectLocation(project), project, spoofax)
 

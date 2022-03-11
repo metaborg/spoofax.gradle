@@ -13,6 +13,7 @@ import org.gradle.api.GradleException
 import org.gradle.api.logging.LogLevel
 import org.gradle.api.logging.configuration.ShowStacktrace
 import org.gradle.api.plugins.JavaPlugin
+import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
 import org.gradle.api.tasks.TaskContainer
 import org.gradle.api.tasks.TaskProvider
@@ -31,6 +32,10 @@ fun TaskContainer.registerSpoofaxBuildLanguageSpecTask(name: String = "spoofaxBu
   register(name, SpoofaxBuildLanguageSpecTask::class)
 
 abstract class SpoofaxBuildLanguageSpecTask : SpoofaxTask() {
+  @get:Internal
+  protected val langSpecExtension
+    get() = project.extensions.getByType<SpoofaxLangSpecExtension>()
+
   init {
     val projectDir = project.projectDir
     val srcGenDir = projectDir.resolve("src-gen")
@@ -45,23 +50,23 @@ abstract class SpoofaxBuildLanguageSpecTask : SpoofaxTask() {
     val compileClasspath = project.configurations.getByName(JavaPlugin.COMPILE_CLASSPATH_CONFIGURATION_NAME)
     dependsOn(compileClasspath.allDependencies) // Do not depend on file contents, `compileJava` task depends on the contents already.
     // 3. Extension properties
-    inputs.property("defaultInputExcludePatterns", extension.defaultInputExcludePatterns)
-    inputs.property("approximateSpoofaxBuildDependencies", extension.spoofaxBuildApproximateDependencies)
-    inputs.property("spoofaxBuildConservativeInputIncludePatterns", extension.spoofaxBuildConservativeInputIncludePatterns)
-    inputs.property("spoofaxBuildConservativeInputExcludePatterns", extension.spoofaxBuildConservativeInputExcludePatterns)
-    inputs.property("spoofaxBuildConservativeOutputIncludePatterns", extension.spoofaxBuildConservativeOutputIncludePatterns)
-    inputs.property("spoofaxBuildConservativeOutputExcludePatterns", extension.spoofaxBuildConservativeOutputExcludePatterns)
-    inputs.property("strategoFormat", extension.strategoFormat).optional(true)
-    inputs.property("otherApproximateDependencies", extension.otherApproximateDependencies)
-    inputs.property("addLanguageContributionsFromMetaborgYaml", extension.addLanguageContributionsFromMetaborgYaml)
-    inputs.property("languageContributions", extension.languageContributions)
+    inputs.property("defaultInputExcludePatterns", langSpecExtension.defaultInputExcludePatterns)
+    inputs.property("approximateSpoofaxBuildDependencies", langSpecExtension.spoofaxBuildApproximateDependencies)
+    inputs.property("spoofaxBuildConservativeInputIncludePatterns", langSpecExtension.spoofaxBuildConservativeInputIncludePatterns)
+    inputs.property("spoofaxBuildConservativeInputExcludePatterns", langSpecExtension.spoofaxBuildConservativeInputExcludePatterns)
+    inputs.property("spoofaxBuildConservativeOutputIncludePatterns", langSpecExtension.spoofaxBuildConservativeOutputIncludePatterns)
+    inputs.property("spoofaxBuildConservativeOutputExcludePatterns", langSpecExtension.spoofaxBuildConservativeOutputExcludePatterns)
+    inputs.property("strategoFormat", langSpecExtension.strategoFormat).optional(true)
+    inputs.property("otherApproximateDependencies", langSpecExtension.otherApproximateDependencies)
+    inputs.property("addLanguageContributionsFromMetaborgYaml", langSpecExtension.addLanguageContributionsFromMetaborgYaml)
+    inputs.property("languageContributions", langSpecExtension.languageContributions)
     // 4. Gradle group/name/version influences the `metaborg.component.yaml` file.
     inputs.property("group", project.group.toString())
     inputs.property("name", project.name)
     inputs.property("version", project.version.toString())
 
     // General inputs and outputs:
-    if(extension.otherApproximateDependencies.get()) {
+    if(langSpecExtension.otherApproximateDependencies.get()) {
       // Approximate inputs/outputs:
       // Inputs:
       // - `metaborg.yaml` config file
@@ -78,8 +83,8 @@ abstract class SpoofaxBuildLanguageSpecTask : SpoofaxTask() {
           "src/main/ds",
           "src/main/strategies"
         )
-        exclude(*extension.defaultInputExcludePatterns.get().toTypedArray())
-        exclude(*extension.spoofaxBuildApproximateAdditionalInputExcludePatterns.get().toTypedArray())
+        exclude(*langSpecExtension.defaultInputExcludePatterns.get().toTypedArray())
+        exclude(*langSpecExtension.spoofaxBuildApproximateAdditionalInputExcludePatterns.get().toTypedArray())
       })
       // TODO: included files that are not in the project directory?
 
@@ -88,18 +93,18 @@ abstract class SpoofaxBuildLanguageSpecTask : SpoofaxTask() {
       outputs.dir(srcGenDir)
       // - target/metaborg
       outputs.files(project.fileTree(targetMetaborgDir) {
-        exclude(*extension.spoofaxBuildApproximateAdditionalOutputExcludePatterns.get().toTypedArray())
+        exclude(*langSpecExtension.spoofaxBuildApproximateAdditionalOutputExcludePatterns.get().toTypedArray())
       })
     } else {
       // Conservative inputs: any file in the project directory (not matching include exclude patterns).
       inputs.files(project.fileTree(".") {
-        include(*extension.spoofaxBuildConservativeInputIncludePatterns.get().toTypedArray())
-        exclude(*extension.spoofaxBuildConservativeInputExcludePatterns.get().toTypedArray())
+        include(*langSpecExtension.spoofaxBuildConservativeInputIncludePatterns.get().toTypedArray())
+        exclude(*langSpecExtension.spoofaxBuildConservativeInputExcludePatterns.get().toTypedArray())
       })
       // Conservative outputs: any file in the project directory (not matching output exclude patterns).
       outputs.files(project.fileTree(".") {
-        include(*extension.spoofaxBuildConservativeOutputIncludePatterns.get().toTypedArray())
-        exclude(*extension.spoofaxBuildConservativeOutputExcludePatterns.get().toTypedArray())
+        include(*langSpecExtension.spoofaxBuildConservativeOutputIncludePatterns.get().toTypedArray())
+        exclude(*langSpecExtension.spoofaxBuildConservativeOutputExcludePatterns.get().toTypedArray())
       })
     }
 
@@ -112,7 +117,7 @@ abstract class SpoofaxBuildLanguageSpecTask : SpoofaxTask() {
     val spoofaxBuildService = spoofaxBuildService.finalizeAndGet()
     spoofaxBuildService.run {
       // Fist override configuration, and load languages and dialects
-      lazyOverrideConfig(extension, configOverrides, spoofax)
+      lazyOverrideConfig(langSpecExtension, configOverrides, spoofax)
       lazyLoadLanguages(project.languageFiles, project, spoofax)
       lazyLoadDialects(spoofax.getProjectLocation(project), project, spoofax)
 
@@ -155,7 +160,7 @@ abstract class SpoofaxBuildLanguageSpecTask : SpoofaxTask() {
       }
 
       // Override Stratego provider in packed ESV file.
-      overrideStrategoProvider(extension)
+      overrideStrategoProvider(langSpecExtension)
     }
 
     // Run compile part of the meta-build.
@@ -172,7 +177,7 @@ abstract class SpoofaxBuildLanguageSpecTask : SpoofaxTask() {
       }
 
       // Override Stratego provider again, as compile runs the ESV compiler again.
-      overrideStrategoProvider(extension)
+      overrideStrategoProvider(langSpecExtension)
     }
   }
 

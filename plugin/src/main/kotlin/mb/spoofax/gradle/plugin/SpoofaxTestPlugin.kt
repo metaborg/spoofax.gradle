@@ -58,7 +58,7 @@ class SpoofaxTestPlugin : Plugin<Project> {
     project: Project,
     extension: SpoofaxTestExtension
   ) {
-    project.tasks.registerSpoofaxTestTask().configure {
+    project.tasks.registerSpoofaxTestTask(extension).configure {
       // Task dependencies:
       // - Language files, which influences which languages are loaded.
       val languageFiles = project.languageFiles

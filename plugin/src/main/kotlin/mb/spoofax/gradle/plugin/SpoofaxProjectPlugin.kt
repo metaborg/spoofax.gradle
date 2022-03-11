@@ -54,7 +54,9 @@ class SpoofaxProjectPlugin : Plugin<Project> {
   private fun configureAfterEvaluate(project: Project, extension: SpoofaxProjectExtension) {
     configureProjectAfterEvaluate(project, extension)
     configureBuildTask(project, extension)
-    project.tasks.registerSpoofaxCleanTask()
+    project.tasks.registerSpoofaxCleanTask().configureSafely {
+      this.extension.set(extension)
+    }
     configureTestTask(project, extension)
   }
 
@@ -109,7 +111,7 @@ class SpoofaxProjectPlugin : Plugin<Project> {
     project: Project,
     extension: SpoofaxProjectExtension
   ) {
-    project.tasks.registerSpoofaxTestTask().configureSafely {
+    project.tasks.registerSpoofaxTestTask(extension).configureSafely {
       // Task dependencies:
       // - Language files, which influences which languages are loaded.
       val languageFiles = project.languageFiles

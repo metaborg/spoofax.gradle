@@ -12,10 +12,6 @@ abstract class SpoofaxTask : DefaultTask() {
   @get:Internal
   abstract val spoofaxBuildService: Property<SpoofaxBuildService>
 
-  @get:Internal
-  protected val extension
-    get() = project.extensions.getByType<SpoofaxLangSpecExtension>()
-
   init {
     val service = project.spoofaxBuildService
     spoofaxBuildService.convention(service)

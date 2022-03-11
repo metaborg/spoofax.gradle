@@ -1,5 +1,6 @@
 package mb.spoofax.gradle.task
 
+import mb.spoofax.gradle.plugin.SpoofaxLangSpecExtension
 import mb.spoofax.gradle.plugin.languageFiles
 import mb.spoofax.gradle.util.finalizeAndGet
 import mb.spoofax.gradle.util.getLanguageSpecification
@@ -9,6 +10,7 @@ import mb.spoofax.gradle.util.lazyLoadLanguages
 import mb.spoofax.gradle.util.lazyOverrideConfig
 import org.gradle.api.provider.Property
 import org.gradle.api.tasks.Input
+import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
 import org.gradle.api.tasks.TaskContainer
 import org.gradle.api.tasks.TaskProvider
@@ -20,6 +22,10 @@ fun TaskContainer.registerSpoofaxCleanLanguageSpecTask(name: String = "spoofaxCl
   register(name, SpoofaxCleanLanguageSpecTask::class)
 
 abstract class SpoofaxCleanLanguageSpecTask : SpoofaxTask() {
+  @get:Internal
+  protected val langSpecExtension
+    get() = project.extensions.getByType<SpoofaxLangSpecExtension>()
+
   @get:Input
   abstract val spoofaxCleanTask: Property<TaskProvider<*>>
 
@@ -33,7 +39,7 @@ abstract class SpoofaxCleanLanguageSpecTask : SpoofaxTask() {
     val spoofaxBuildService = spoofaxBuildService.finalizeAndGet()
     spoofaxBuildService.run {
       // Fist override configuration, and load languages and dialects
-      lazyOverrideConfig(extension, configOverrides, spoofax)
+      lazyOverrideConfig(langSpecExtension, configOverrides, spoofax)
       lazyLoadLanguages(project.languageFiles, project, spoofax)
       lazyLoadDialects(spoofax.getProjectLocation(project), project, spoofax)
 

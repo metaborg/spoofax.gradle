@@ -1,5 +1,6 @@
 package mb.spoofax.gradle.task
 
+import mb.spoofax.gradle.plugin.SpoofaxExtensionBase
 import mb.spoofax.gradle.plugin.languageFiles
 import mb.spoofax.gradle.util.SpoofaxBuildService
 import mb.spoofax.gradle.util.finalizeAndGet
@@ -26,6 +27,9 @@ abstract class SpoofaxCleanTask : SpoofaxTask() {
   @get:Internal
   abstract val spoofaxProjectSupplier: Property<SpoofaxBuildService.() -> IProject>
 
+  @get:Internal
+  abstract val extension: Property<SpoofaxExtensionBase>
+
 
   init {
     spoofaxProjectSupplier.convention { spoofax.getProject(project) }
@@ -45,6 +49,7 @@ abstract class SpoofaxCleanTask : SpoofaxTask() {
   fun execute() {
     val spoofaxBuildService = spoofaxBuildService.finalizeAndGet()
     val spoofaxProjectSupplier = spoofaxProjectSupplier.finalizeAndGet()
+    val extension = extension.finalizeAndGet()
     spoofaxBuildService.run {
       // Fist override configuration, and load languages and dialects
       lazyOverrideConfig(extension, configOverrides, spoofax)

@@ -3,9 +3,12 @@ All notable changes to this project are documented in this file, based on [Keep 
 
 
 ## [Unreleased]
+### Fixed
+- Fixed `UnknownDomainObjectException` in certain cases.
 
 
 ## [0.5.4]
+### Fixed
 - Ignore directories created by `languageSpecBuilder.initialize`, fixing incrementality issues from clean builds.
 
 
