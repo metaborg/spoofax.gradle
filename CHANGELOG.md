@@ -3,6 +3,9 @@ All notable changes to this project are documented in this file, based on [Keep 
 
 
 ## [Unreleased]
+
+
+## [0.5.4]
 - Ignore directories created by `languageSpecBuilder.initialize`, fixing incrementality issues from clean builds.
 
 
@@ -23,5 +26,6 @@ All notable changes to this project are documented in this file, based on [Keep 
 - `spoofaxBuildApproximateAdditionalInputExcludePatterns` and `spoofaxBuildApproximateAdditionalOutputExcludePatterns` to `spoofaxLanguageSpecification` extension to support setting up additional include/exclude patterns when building language specifications.
 
 
-[Unreleased]: https://github.com/metaborg/spoofax.gradle/compare/release-0.5.3...HEAD
+[Unreleased]: https://github.com/metaborg/spoofax.gradle/compare/release-0.5.4...HEAD
+[0.5.4]: https://github.com/metaborg/spoofax.gradle/compare/release-0.5.3...release-0.5.4
 [0.5.3]: https://github.com/metaborg/spoofax.gradle/compare/release-0.5.2...release-0.5.3
