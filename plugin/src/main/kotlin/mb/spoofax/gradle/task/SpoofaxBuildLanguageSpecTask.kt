@@ -72,6 +72,12 @@ abstract class SpoofaxBuildLanguageSpecTask : SpoofaxTask() {
           "**/*.esv", "**/*.sdf", "**/*.def", "**/*.sdf3", "**/*.str", "**/*.str2", "**/*.nabl", "**/*.ts",
           "**/*.nabl2", "**/*.stx", "**/*.ds", "**/*.tbl", "**/*.pp.af"
         )
+        exclude( // Ignore directories created by `languageSpecBuilder.initialize`.
+          "src",
+          "src/main",
+          "src/main/ds",
+          "src/main/strategies"
+        )
         exclude(*extension.defaultInputExcludePatterns.get().toTypedArray())
         exclude(*extension.spoofaxBuildApproximateAdditionalInputExcludePatterns.get().toTypedArray())
       })
