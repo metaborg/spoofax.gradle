@@ -19,7 +19,6 @@ import org.metaborg.core.language.LanguageVersion
 import org.metaborg.spoofax.core.SpoofaxConstants
 import javax.inject.Inject
 
-
 open class SpoofaxBasePlugin @Inject constructor(
   private val objectFactory: ObjectFactory,
   private val softwareComponentFactory: SoftwareComponentFactory

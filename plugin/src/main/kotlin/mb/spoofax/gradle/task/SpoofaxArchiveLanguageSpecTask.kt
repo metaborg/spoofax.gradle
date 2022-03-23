@@ -111,7 +111,8 @@ abstract class SpoofaxArchiveLanguageSpecTask : SpoofaxTask() {
     }
 
     // Task that assembles the project depends on this task, as this task generates artifacts to be assembled.
-    project.tasks.getByName(LifecycleBasePlugin.ASSEMBLE_TASK_NAME).dependsOn(this)
+    project.tasks.named(LifecycleBasePlugin.ASSEMBLE_TASK_NAME).configure { dependsOn(this@SpoofaxArchiveLanguageSpecTask) }
+    project.tasks.named(JavaPlugin.JAR_TASK_NAME).configure { dependsOn(this@SpoofaxArchiveLanguageSpecTask) }
   }
 
   @TaskAction

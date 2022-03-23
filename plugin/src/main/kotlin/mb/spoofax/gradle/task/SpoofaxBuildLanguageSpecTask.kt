@@ -18,6 +18,7 @@ import org.gradle.api.tasks.TaskAction
 import org.gradle.api.tasks.TaskContainer
 import org.gradle.api.tasks.TaskProvider
 import org.gradle.kotlin.dsl.*
+import org.gradle.language.base.plugins.LifecycleBasePlugin
 import org.metaborg.core.MetaborgException
 import org.metaborg.core.action.CompileGoal
 import org.metaborg.core.build.BuildInputBuilder
@@ -110,6 +111,8 @@ abstract class SpoofaxBuildLanguageSpecTask : SpoofaxTask() {
 
     // Task that compiles Java sources depends on this task, as this task may generate Java source files.
     project.tasks.named(JavaPlugin.COMPILE_JAVA_TASK_NAME).configure { dependsOn(this@SpoofaxBuildLanguageSpecTask) }
+    project.tasks.named(JavaPlugin.CLASSES_TASK_NAME).configure { dependsOn(this@SpoofaxBuildLanguageSpecTask) }
+    project.tasks.named(JavaPlugin.JAR_TASK_NAME).configure { dependsOn(this@SpoofaxBuildLanguageSpecTask) }
   }
 
   @TaskAction
