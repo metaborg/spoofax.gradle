@@ -62,7 +62,7 @@ if(standaloneBuild) { // If standalone build, apply additional plugins and set d
   spoofax2CoreDependency = "$group:org.metaborg.spoofax.core:$version"
   dependencies {
     api("$group:org.metaborg.spoofax.meta.core:$version")
-    api("org.metaborg:org.metaborg.spt.core:$spoofax2Version")
+    api("$group:org.metaborg.spt.core:$version")
   }
 }
 
