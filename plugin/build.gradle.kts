@@ -77,12 +77,14 @@ configure<mb.gradle.config.MetaborgExtension> {
 
 dependencies {
   /*
-  org.metaborg.spoofax.meta.core depends on a version of PIE which depends on an old version of org.metaborg:resource.
-  Due to an issue in Gradle, the first version of resource that is loaded will be used by code in plugins that react to
-  certain Gradle events, such as Project#afterEvaluate. Since the old version does not have certain API, this will fail.
-  Therefore, we force the version to a recent one.
+  org.metaborg.spoofax.meta.core depends on older version of several artifacts. Due to an issue in Gradle, the first
+  version of those artifacts that are loaded will be used by code in plugins that react to certain Gradle events, such
+  as Project#afterEvaluate. Since the old versions do not have certain APIs, this will fail. Therefore, we force the
+  versions to more recent ones.
   */
-  api("org.metaborg:resource:0.11.1")
+  api("org.metaborg:resource:0.14.0")
+  api("org.metaborg:common:0.10.3")
+  api("org.metaborg:pie.runtime:0.20.0")
 }
 
 gradlePlugin {
