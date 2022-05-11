@@ -5,17 +5,24 @@ All notable changes to this project are documented in this file, based on [Keep 
 ## [Unreleased]
 
 
-## [0.5.5]
+## [0.5.6] - 2022-05-11
+### Changed
+- `resource` requirement to `0.14.1`.
+- `common` requirement to `0.11.0`.
+- `pie` requirement to `0.21.0`.
+
+
+## [0.5.5] - 2022-03-11
 ### Fixed
 - Fixed `UnknownDomainObjectException` in certain cases.
 
 
-## [0.5.4]
+## [0.5.4] - 2022-03-11
 ### Fixed
 - Ignore directories created by `languageSpecBuilder.initialize`, fixing incrementality issues from clean builds.
 
 
-## [0.5.3]
+## [0.5.3] - 2022-03-09
 ### Fixed
 - Always very verbose logging. Notes are now logged at Gradle INFO level, meaning that they are only shown with `--info` or `--debug`. Warnings are now logged at Gradle WARN level, so they can be ignored with `--warning-mode=none`. Errors are now logged at Gradle ERROR level, so they are always shown and outputted to stderr.
 - Language specifications rebuilding without changes due to `target/metaborg/table.bin` or `target/metaborg/table-completions.bin` being changed after the build.
@@ -32,7 +39,8 @@ All notable changes to this project are documented in this file, based on [Keep 
 - `spoofaxBuildApproximateAdditionalInputExcludePatterns` and `spoofaxBuildApproximateAdditionalOutputExcludePatterns` to `spoofaxLanguageSpecification` extension to support setting up additional include/exclude patterns when building language specifications.
 
 
-[Unreleased]: https://github.com/metaborg/spoofax.gradle/compare/release-0.5.5...HEAD
+[Unreleased]: https://github.com/metaborg/spoofax.gradle/compare/release-0.5.6...HEAD
+[0.5.6]: https://github.com/metaborg/spoofax.gradle/compare/release-0.5.5...release-0.5.6
 [0.5.5]: https://github.com/metaborg/spoofax.gradle/compare/release-0.5.4...release-0.5.5
 [0.5.4]: https://github.com/metaborg/spoofax.gradle/compare/release-0.5.3...release-0.5.4
 [0.5.3]: https://github.com/metaborg/spoofax.gradle/compare/release-0.5.2...release-0.5.3

@@ -82,9 +82,9 @@ dependencies {
   as Project#afterEvaluate. Since the old versions do not have certain APIs, this will fail. Therefore, we force the
   versions to more recent ones.
   */
-  api("org.metaborg:resource:0.14.0")
-  api("org.metaborg:common:0.10.3")
-  api("org.metaborg:pie.runtime:0.20.0")
+  api("org.metaborg:resource:0.14.1")
+  api("org.metaborg:common:0.11.0")
+  api("org.metaborg:pie.runtime:0.21.0")
 }
 
 gradlePlugin {
