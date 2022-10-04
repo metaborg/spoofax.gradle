@@ -6,7 +6,6 @@ plugins {
   id("org.metaborg.spoofax.gradle.langspec") apply false // No version: use the plugin from the included composite build
   id("org.metaborg.spoofax.gradle.project") apply false
   id("org.metaborg.spoofax.gradle.test") apply false
-  id("de.set.ecj") version "1.4.1" apply false
 }
 
 subprojects {
