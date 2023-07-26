@@ -1,19 +1,34 @@
-# macOS
-*.DS_Store
+# Misc
+.cache
+.DS_Store
+
+
+# Intellij
+.idea/
+!.idea/icon.svg
+!.idea/icon_dark.svg
+*.iws
+out/
+*.iml
+*.ipr
+
 
 # Java
 *.class
+*.log
 *.jar
-hs_err_pid*
+*.war
+*.nar
+*.ear
+
 
 # Gradle
-**/.gradle
+.gradle
+gradle-app.setting
+!gradle-wrapper.jar
+.gradletasknamecache
 **/build/
-!.gradlew/wrapper/gradle-wrapper.jar
 
-# IntelliJ
-**/.idea
-**/out
 
 # Eclipse
 **/.project
@@ -21,7 +36,3 @@ hs_err_pid*
 **/.classpath
 **/.factorypath
 **/bin
-
-# Spoofax
-**/src-gen
-**/target
