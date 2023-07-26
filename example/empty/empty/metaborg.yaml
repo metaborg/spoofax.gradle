@@ -12,3 +12,5 @@ pardonedLanguages:
 language:
   sdf:
     sdf2table: java
+  stratego:
+    enabled: false
