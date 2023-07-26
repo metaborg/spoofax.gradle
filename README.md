@@ -1,21 +1,18 @@
 [![GitHub license](https://img.shields.io/github/license/metaborg/spoofax.gradle)](https://github.com/metaborg/spoofax.gradle/blob/master/LICENSE)
 [![Jenkins](https://img.shields.io/jenkins/build/https/buildfarm.metaborg.org/job/metaborg/job/spoofax.gradle/job/master)](https://buildfarm.metaborg.org/job/metaborg/job/spoofax.gradle/job/master/lastBuild)
+[![Release](https://img.shields.io/nexus/public/org.metaborg/spoofax.gradle?server=https%3A%2F%2Fartifacts.metaborg.org%2F&label=latest&color=brightgreen)](https://artifacts.metaborg.org/content/repositories/releases/org/metaborg/spoofax.gradle/)
 [![Artifact](https://img.shields.io/maven-metadata/v?label=gradle.config&metadataUrl=https%3A%2F%2Fartifacts.metaborg.org%2Fcontent%2Frepositories%2Freleases%2Forg%2Fmetaborg%2Fspoofax.gradle%2Fmaven-metadata.xml)](https://mvnrepository.com/artifact/org.metaborg/spoofax.gradle?repo=metaborg-releases)
 
-
 # Spoofax Gradle
-
 Spoofax Gradle is a Gradle plugin for building and using Spoofax language specifications.
 
 ## Requirements
-
 Gradle 6.1 or higher is required.
 The following code snippets assume you are using Gradle with Kotlin, but should be translatable to Groovy as well.
 
 ## Prerequisites
-
-The Coronium plugin is not yet published to the Gradle plugins repository.
-Therefore, to enable the plugin, add our repository to your settings.gradle(.kts) file:
+The Spoofax Gradle plugin is not yet published to the Gradle plugins repository.
+Therefore, to enable the plugin, add our repository to your `settings.gradle.kts` file:
 
 ```kotlin
 pluginManagement {
@@ -26,7 +23,6 @@ pluginManagement {
 ```
 
 ## Spoofax version
-
 Due to the complex nature of language development and Spoofax's API, this plugin only works with the single version of Spoofax it was built for.
 The supported Gradle versions have also changed over time.
 The following table lists the supported versions:
@@ -46,12 +42,11 @@ The following table lists the supported versions:
 The latest version of the plugin can be found at the top of this readme.
 
 ## Building and testing a language specification
-
-Apply the langspec plugin to a project (a build.gradle(.kts) file) as follows:
+Apply the `langspec` plugin to a project (a `build.gradle.kts` file) as follows:
 
 ```kotlin
 plugins {
-  id("org.metaborg.spoofax.gradle.langspec") version("0.5.1")
+  id("org.metaborg.spoofax.gradle.langspec") version("0.5.7")
 }
 ```
 
@@ -86,7 +81,7 @@ spoofaxLanguageSpecification {
 }
 ```
 
-Finally, the Stratego format can be overrode, enabling developing using `ctree` while building with `jar`:
+Finally, the Stratego format can be overridden, enabling developing using `ctree` while building with `jar`:
 
 ```kotlin
 spoofaxLanguageSpecification {
@@ -95,7 +90,6 @@ spoofaxLanguageSpecification {
 ```
 
 ## Making dependencies
-
 The plugin reads your `metaborg.yaml` file and creates dependencies to the corresponding language implementations.
 Therefore, in most cases, dependencies do not have to be specified in Gradle.
 However, if you require compile dependency on a language implementation in the same [multi-project build](https://docs.gradle.org/current/userguide/multi_project_builds.html), a project dependency needs to be added as follows:
@@ -115,14 +109,13 @@ dependencies {
 ```
 
 ## Using a language implementation
-
 Built language implementations can be used to build/test examples, or to apply the compiler of your language to a Gradle project.
 
 Apply the project plugin to a project (a build.gradle(.kts) file) as follows:
 
 ```kotlin
 plugins {
-  id("org.metaborg.spoofax.gradle.project") version("0.5.1")
+  id("org.metaborg.spoofax.gradle.project") version("0.5.7")
 }
 ```
 
@@ -133,15 +126,14 @@ If the `java` plugin is enabled for this project, the Spoofax Gradle plugin will
 Therefore, if your language generates Java files in a [Java source set](https://docs.gradle.org/current/userguide/java_plugin.html#source_sets), the Java compiler will pick up these files and compile them, enabling Java-generating DSLs.
 
 ## Separately testing a language specification
-
 A language specification can be tested with SPT files in the same project.
 However, it is also possible to test a language specification with tests in a separate project.
 
-Apply the test plugin to a project (a build.gradle(.kts) file) as follows:
+Apply the test plugin to a project (a `build.gradle.kts)` file) as follows:
 
 ```kotlin
 plugins {
-  id("org.metaborg.spoofax.gradle.test") version("0.5.1")
+  id("org.metaborg.spoofax.gradle.test") version("0.5.7")
 }
 ```
 
@@ -162,5 +154,4 @@ dependencies {
 ```
 
 ## Examples
-
 The `example` directory of this repository has several examples using this plugin.
