@@ -5,6 +5,7 @@ All notable changes to this project are documented in this file, based on [Keep 
 ## [Unreleased]
 ### Changed
 - Support [Spoofax 2.5.18](https://spoofax.dev/release/note/2.5.18/).
+- Update `org.metaborg.gradle.config` plugin to 0.4.8.
 
 
 ## [0.5.6] - 2022-05-11
