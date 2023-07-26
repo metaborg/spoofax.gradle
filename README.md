@@ -40,7 +40,8 @@ The following table lists the supported versions:
 | 0.5.0                 | 2.5.14  | 5.3-6.9.2 |
 | 0.5.1                 | 2.5.15  | 5.3-6.9.2 |
 | 0.5.2                 | 2.5.16  | 5.3-6.9.2 |
-| 0.5.3-latest          | 2.5.16  | 6.1+      |
+| 0.5.3-0.5.6           | 2.5.16  | 6.1+      |
+| 0.5.7-latest          | 2.5.18  | 6.1+      |
 
 The latest version of the plugin can be found at the top of this readme.
 

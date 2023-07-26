@@ -80,7 +80,7 @@ dependencies {
   org.metaborg.spoofax.meta.core depends on older version of several artifacts. Due to an issue in Gradle, the first
   version of those artifacts that are loaded will be used by code in plugins that react to certain Gradle events, such
   as Project#afterEvaluate. Since the old versions do not have certain APIs, this will fail. Therefore, we force the
-  versions to more recent ones.
+  versions to the latest ones.
   */
   api("org.metaborg:resource:0.14.1")
   api("org.metaborg:common:0.11.0")
