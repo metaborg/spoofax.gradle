@@ -112,7 +112,9 @@ abstract class SpoofaxBuildLanguageSpecTask : SpoofaxTask() {
     // Task that compiles Java sources depends on this task, as this task may generate Java source files.
     project.tasks.named(JavaPlugin.COMPILE_JAVA_TASK_NAME).configure { dependsOn(this@SpoofaxBuildLanguageSpecTask) }
     project.tasks.named(JavaPlugin.CLASSES_TASK_NAME).configure { dependsOn(this@SpoofaxBuildLanguageSpecTask) }
+    project.tasks.named(JavaPlugin.JAVADOC_TASK_NAME).configure { dependsOn(this@SpoofaxBuildLanguageSpecTask) }
     project.tasks.named(JavaPlugin.JAR_TASK_NAME).configure { dependsOn(this@SpoofaxBuildLanguageSpecTask) }
+    project.tasks.named("sourcesJar").configure { dependsOn(this@SpoofaxBuildLanguageSpecTask) }
   }
 
   @TaskAction
