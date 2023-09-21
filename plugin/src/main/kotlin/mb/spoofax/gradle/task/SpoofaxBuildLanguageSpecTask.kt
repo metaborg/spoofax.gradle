@@ -114,7 +114,7 @@ abstract class SpoofaxBuildLanguageSpecTask : SpoofaxTask() {
     project.tasks.named(JavaPlugin.CLASSES_TASK_NAME).configure { dependsOn(this@SpoofaxBuildLanguageSpecTask) }
     project.tasks.named(JavaPlugin.JAVADOC_TASK_NAME).configure { dependsOn(this@SpoofaxBuildLanguageSpecTask) }
     project.tasks.named(JavaPlugin.JAR_TASK_NAME).configure { dependsOn(this@SpoofaxBuildLanguageSpecTask) }
-    project.tasks.named("sourcesJar").configure { dependsOn(this@SpoofaxBuildLanguageSpecTask) }
+    project.tasks.matching { it.name == "sourcesJar" }.configureEach {  dependsOn(this@SpoofaxBuildLanguageSpecTask) }
   }
 
   @TaskAction
