@@ -1,8 +1,16 @@
 # Changelog
-All notable changes to this project are documented in this file, based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
+All notable changes to this project are documented in this file, based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 
-## [Unreleased]
+## [Unreleased] - yyyy-mm-dd
+
+
+## [0.5.8] - 2023-09-21
+### Changed
+- Ensure 'sourcesJar' and 'javadoc' also depend on 'spoofaxBuildLanguageSpec' task.
+
+
+## [0.5.7] - 2023-07-26
 ### Changed
 - Support [Spoofax 2.5.18](https://spoofax.dev/release/note/2.5.18/).
 - Update `org.metaborg.gradle.config` plugin to 0.4.8.
@@ -43,7 +51,9 @@ All notable changes to this project are documented in this file, based on [Keep 
 - `spoofaxBuildApproximateAdditionalInputExcludePatterns` and `spoofaxBuildApproximateAdditionalOutputExcludePatterns` to `spoofaxLanguageSpecification` extension to support setting up additional include/exclude patterns when building language specifications.
 
 
-[Unreleased]: https://github.com/metaborg/spoofax.gradle/compare/release-0.5.6...HEAD
+[Unreleased]: https://github.com/metaborg/spoofax.gradle/compare/release-0.5.8...HEAD
+[0.5.8]: https://github.com/metaborg/spoofax.gradle/compare/release-0.5.7...release-0.5.8
+[0.5.7]: https://github.com/metaborg/spoofax.gradle/compare/release-0.5.6...release-0.5.7
 [0.5.6]: https://github.com/metaborg/spoofax.gradle/compare/release-0.5.5...release-0.5.6
 [0.5.5]: https://github.com/metaborg/spoofax.gradle/compare/release-0.5.4...release-0.5.5
 [0.5.4]: https://github.com/metaborg/spoofax.gradle/compare/release-0.5.3...release-0.5.4
