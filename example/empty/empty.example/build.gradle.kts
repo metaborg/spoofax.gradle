@@ -1,7 +1,7 @@
 plugins {
-  id("org.metaborg.spoofax.gradle.project")
+    id("org.metaborg.spoofax.gradle.project")
 }
 
 dependencies {
-  compileLanguage(project(":empty"))
+    compileLanguage(project(":empty"))
 }

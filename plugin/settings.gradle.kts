@@ -1,11 +1,16 @@
-rootProject.name = "spoofax.gradle"
+rootProject.name = "spoofax2-gradle-project"
 
 pluginManagement {
-  repositories {
-    maven("https://artifacts.metaborg.org/content/groups/public/")
-  }
+    repositories {
+        maven("https://artifacts.metaborg.org/content/groups/public/")
+    }
 }
 
-if(org.gradle.util.VersionNumber.parse(gradle.gradleVersion).major < 6) {
-  enableFeaturePreview("GRADLE_METADATA")
+dependencyResolutionManagement {
+    versionCatalogs {
+        create("libs") {
+            from("dev.spoofax:spoofax3-catalog:0.0.0-SNAPSHOT")
+        }
+    }
 }
+
