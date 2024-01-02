@@ -1,3 +1,5 @@
+import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
+
 /**
  * The Spoofax Gradle plugin can be built standalone (i.e., when running `./gradlew buildAll` from the root of this
  * repository), or can be built as part of the devenv repository. When built standalone, we depend on Spoofax 2
@@ -22,6 +24,7 @@ plugins {
     `java-gradle-plugin`
     `kotlin-dsl`
     `maven-publish`
+    id("com.github.johnrengelman.shadow") version "8.1.1"
 }
 
 group = "dev.spoofax"
@@ -78,6 +81,10 @@ if (standaloneBuild) { // If standalone build, apply additional plugins and set 
 //}
 
 dependencies {
+    // These dependencies should not be shadowed
+    shadow(localGroovy())
+    shadow(gradleApi())
+
     // org.metaborg.spoofax.meta.core depends on older version of several artifacts. Due to an issue in Gradle, the first
     // version of those artifacts that are loaded will be used by code in plugins that react to certain Gradle events, such
     // as Project#afterEvaluate. Since the old versions do not have certain APIs, this will fail. Therefore, we force the
@@ -87,6 +94,69 @@ dependencies {
     api(libs.spoofax3.common)
     api(libs.spoofax3.pie.runtime)
 }
+
+// Remove the default gradleApi() dependency from the `api` configuration,
+//  since we already added it to the `shadow` configuration.
+configurations.api.configure { dependencies.remove(project.dependencies.gradleApi()) }
+
+val shadowJarTask = tasks.named<ShadowJar>("shadowJar") {
+//tasks.withType(ShadowJar::class.java).configureEach {
+    // Enable zip64 to support ZIP files with more than 2^16 entries, which we need.
+    isZip64 = true
+    // Allow duplicates, as Spoofax 2 has several duplicate things on the classpath.
+    duplicatesStrategy = DuplicatesStrategy.INCLUDE
+
+    // The shadow jar normally ends with `-all.jar`, but we want to overwrite the original jar.
+    archiveClassifier.set("")
+    // To avoid dependency conflicts, we related them to a different namespace
+//    isEnableRelocation = true
+    relocationPrefix = "mb.spoofax.gradle.shadow"
+    mergeServiceFiles()
+    // Exclude signature files from dependencies, otherwise the JVM will refuse to load the created JAR file.
+    exclude("META-INF/*.SF")
+    exclude("META-INF/*.DSA")
+    exclude("META-INF/*.RSA")
+}
+
+configurations.archives.get().artifacts.clear()
+configurations {
+    artifacts {
+        runtimeElements(shadowJarTask)
+        apiElements(shadowJarTask)
+        archives(tasks.shadowJar)
+    }
+}
+
+// Add the shadow JAR to the runtime consumable configuration
+configurations.apiElements.get().artifacts.clear()
+configurations.apiElements.get().outgoing.artifact(tasks.shadowJar)
+configurations.runtimeElements.get().outgoing.artifacts.clear()
+configurations.runtimeElements.get().outgoing.artifact(tasks.shadowJar)
+
+val shadowJarConfig = configurations.create("shadowJar") {
+    isCanBeConsumed = true
+    isCanBeResolved = false
+}
+
+artifacts {
+    add(shadowJarConfig.name, tasks.shadowJar)
+}
+
+// Disabling default jar task as it is overridden by shadowJar
+tasks.named("jar").configure {
+    enabled = false
+}
+
+
+//tasks.named("assemble").configure {
+//    dependsOn("shadowJar")
+//}
+//
+////configurations.archives.artifacts.clear()
+//artifacts {
+////    runtimeOnly(tasks.shadowJar)
+//    archives(tasks.shadowJar)
+//}
 
 gradlePlugin {
     plugins {
@@ -110,15 +180,12 @@ gradlePlugin {
 }
 
 // FIXME: Is this needed?
-//// Add generated resources directory as a resource source directory.
-//val generatedResourcesDir = project.buildDir.resolve("generated/resources")
-//sourceSets {
-//    main {
-//        resources {
-//            srcDir(generatedResourcesDir)
-//        }
-//    }
-//}
+// Add generated resources directory as a resource source directory.
+sourceSets.main {
+    resources {
+        srcDir(layout.buildDirectory.dir("generated/resources"))
+    }
+}
 
 // FIXME: Why is this needed?
 //// Task that writes properties to a config.properties file, which is used in the plugin.
