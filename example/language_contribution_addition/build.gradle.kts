@@ -1,7 +1,6 @@
 import org.metaborg.core.language.*
 
 plugins {
-    id("org.metaborg.spoofax.gradle.langspec")
 }
 
 spoofaxLanguageSpecification {

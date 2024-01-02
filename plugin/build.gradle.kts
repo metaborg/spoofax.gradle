@@ -24,6 +24,8 @@ plugins {
     `maven-publish`
 }
 
+group = "dev.spoofax"
+
 repositories {
     mavenCentral()
     maven("https://nexus.usethesource.io/content/repositories/releases/")

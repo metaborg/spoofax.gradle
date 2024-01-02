@@ -46,7 +46,7 @@ Apply the `langspec` plugin to a project (a `build.gradle.kts` file) as follows:
 
 ```kotlin
 plugins {
-  id("org.metaborg.spoofax.gradle.langspec") version("0.5.8")
+  id("dev.spoofax.spoofax2.gradle.langspec") version("0.5.8")
 }
 ```
 
@@ -115,7 +115,7 @@ Apply the project plugin to a project (a build.gradle(.kts) file) as follows:
 
 ```kotlin
 plugins {
-  id("org.metaborg.spoofax.gradle.project") version("0.5.8")
+  id("dev.spoofax.spoofax2.gradle.project") version("0.5.8")
 }
 ```
 
@@ -133,7 +133,7 @@ Apply the test plugin to a project (a `build.gradle.kts)` file) as follows:
 
 ```kotlin
 plugins {
-  id("org.metaborg.spoofax.gradle.test") version("0.5.8")
+  id("dev.spoofax.spoofax2.gradle.test") version("0.5.8")
 }
 ```
 
