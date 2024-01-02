@@ -15,7 +15,6 @@ import java.util.*
 
 @Suppress("UnstableApiUsage", "MemberVisibilityCanBePrivate")
 open class SpoofaxExtensionBase internal constructor(internal val project: Project) {
-  val spoofax2Version: Property<String> = project.objects.property()
   val spoofax2CoreDependency: Property<String> = project.objects.property()
   val addCompileDependenciesFromMetaborgYaml: Property<Boolean> = project.objects.property()
   val addSourceDependenciesFromMetaborgYaml: Property<Boolean> = project.objects.property()
@@ -32,9 +31,8 @@ open class SpoofaxExtensionBase internal constructor(internal val project: Proje
 
   init {
     val configProperties = configProperties()
-    spoofax2Version.convention(configProperties["spoofax2Version"]?.toString() ?: MetaborgConstants.METABORG_VERSION)
     spoofax2CoreDependency.convention(configProperties["spoofax2CoreDependency"]?.toString()
-      ?: "org.metaborg:org.metaborg.spoofax.core:$spoofax2Version")
+      ?: "org.metaborg:org.metaborg.spoofax.core")
     addCompileDependenciesFromMetaborgYaml.convention(true)
     addSourceDependenciesFromMetaborgYaml.convention(true)
     addJavaDependenciesFromMetaborgYaml.convention(true)

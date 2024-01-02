@@ -35,7 +35,6 @@ import java.io.File
 import javax.inject.Inject
 
 data class ConfigOverride(
-  var metaborgVersion: String? = null,
   var groupId: String? = null,
   var id: String? = null,
   var version: LanguageVersion? = null,
@@ -47,9 +46,6 @@ data class ConfigOverride(
   var strategoFormat: StrategoFormat? = null
 ) {
   fun applyToConfig(config: HierarchicalConfiguration<ImmutableNode>, languageComponentConfig: ILanguageComponentConfig?) {
-    if(metaborgVersion != null) {
-      config.setProperty("metaborgVersion", metaborgVersion)
-    }
     if(languageComponentConfig != null) {
       val originalIdentifier = languageComponentConfig.identifier()
       val newIdentifier = LanguageIdentifier(groupId ?: originalIdentifier.groupId, id ?: originalIdentifier.id, version
@@ -88,7 +84,6 @@ data class ConfigOverride(
 
 internal fun SpoofaxExtensionBase.overrideMetaborgVersion(configOverrides: SpoofaxGradleConfigOverrides) {
   configOverrides.update(project) {
-    this.metaborgVersion = this@overrideMetaborgVersion.spoofax2Version.finalizeAndGet()
   }
 }
 
