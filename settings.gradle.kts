@@ -11,4 +11,4 @@ pluginManagement {
 // composite build is required.
 includeBuild("plugin/")
 // Included builds listed below can use the Gradle plugins built in 'plugin'.
-//includeBuild("example/")
+includeBuild("example/")

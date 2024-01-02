@@ -6,6 +6,14 @@ pluginManagement {
     }
 }
 
+dependencyResolutionManagement {
+    versionCatalogs {
+        create("libs") {
+            from("dev.spoofax:spoofax3-catalog:0.0.0-SNAPSHOT")
+        }
+    }
+}
+
 includeBuild("../plugin/")
 
 include(":empty:empty")
