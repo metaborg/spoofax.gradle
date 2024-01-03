@@ -98,16 +98,13 @@ internal fun SpoofaxExtensionBase.overrideIdentifiers(configOverrides: SpoofaxGr
 
 internal fun SpoofaxExtensionBase.overrideDependencies(configOverrides: SpoofaxGradleConfigOverrides) {
   configOverrides.update(project) {
-    compileDeps = project.compileLanguageFiles.resolvedConfiguration.firstLevelModuleDependencies.map {
-      it.toSpoofaxDependency()
-    }
-    sourceDeps = project.sourceLanguageFiles.resolvedConfiguration.firstLevelModuleDependencies.map {
-      it.toSpoofaxDependency()
-    }
+    compileDeps = project.compileLanguageFiles.resolvedConfiguration.firstLevelModuleDependencies
+      .mapNotNull { it.toSpoofaxDependency() }
+    sourceDeps = project.sourceLanguageFiles.resolvedConfiguration.firstLevelModuleDependencies
+      .mapNotNull { it.toSpoofaxDependency() }
     if(project.plugins.hasPlugin(JavaPlugin::class.java)) {
-      project.configurations.getByName(JavaPlugin.COMPILE_CLASSPATH_CONFIGURATION_NAME).resolvedConfiguration.firstLevelModuleDependencies.map {
-        it.toSpoofaxDependency()
-      }
+      project.configurations.getByName(JavaPlugin.COMPILE_CLASSPATH_CONFIGURATION_NAME).resolvedConfiguration.firstLevelModuleDependencies
+        .mapNotNull { it.toSpoofaxDependency() }
     }
   }
 }
