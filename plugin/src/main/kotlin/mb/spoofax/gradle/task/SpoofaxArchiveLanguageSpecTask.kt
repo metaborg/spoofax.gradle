@@ -2,7 +2,7 @@ package mb.spoofax.gradle.task
 
 import mb.spoofax.gradle.plugin.SpoofaxLangSpecExtension
 import mb.spoofax.gradle.plugin.languageFiles
-import mb.spoofax.gradle.util.finalizeAndGet
+import mb.spoofax.gradle.util.*
 import mb.spoofax.gradle.util.getLanguageSpecification
 import mb.spoofax.gradle.util.getProjectLocation
 import mb.spoofax.gradle.util.lazyLoadCompiledLanguage
@@ -128,7 +128,9 @@ abstract class SpoofaxArchiveLanguageSpecTask : SpoofaxTask() {
 
       // Get language spec, with overridden configuration.
       val languageSpec = spoofaxMeta.getLanguageSpecification(project)
-      val languageSpecBuildInput = LanguageSpecBuildInput(languageSpec)
+      // Ignore the metaborg.yaml ID and version, and use the Gradle group:name:version instead.
+      val wrappedLanguageSpec = GradleSpoofaxLanguageSpecWrapper(languageIdentifier.get(), languageSpec)
+      val languageSpecBuildInput = LanguageSpecBuildInput(wrappedLanguageSpec)
 
       try {
         languageSpecBuilder.pkg(languageSpecBuildInput)
