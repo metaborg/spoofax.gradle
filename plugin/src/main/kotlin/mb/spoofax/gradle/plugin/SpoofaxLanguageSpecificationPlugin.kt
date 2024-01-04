@@ -1,12 +1,6 @@
 package mb.spoofax.gradle.plugin
 
-import mb.spoofax.gradle.task.SpoofaxArchiveLanguageSpecTask
-import mb.spoofax.gradle.task.registerSpoofaxArchiveLanguageSpecTask
-import mb.spoofax.gradle.task.registerSpoofaxBuildLanguageSpecTask
-import mb.spoofax.gradle.task.registerSpoofaxBuildTask
-import mb.spoofax.gradle.task.registerSpoofaxCleanLanguageSpecTask
-import mb.spoofax.gradle.task.registerSpoofaxCleanTask
-import mb.spoofax.gradle.task.registerSpoofaxTestTask
+import mb.spoofax.gradle.task.*
 import mb.spoofax.gradle.util.SpoofaxInstance
 import mb.spoofax.gradle.util.configureSafely
 import mb.spoofax.gradle.util.finalizeAndGet
@@ -15,6 +9,7 @@ import mb.spoofax.gradle.util.lazyLoadCompiledLanguage
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.plugins.JavaLibraryPlugin
+import org.gradle.api.plugins.JavaPlugin
 import org.gradle.api.provider.ListProperty
 import org.gradle.api.provider.Property
 import org.gradle.api.provider.SetProperty
@@ -117,8 +112,16 @@ class SpoofaxLanguageSpecificationPlugin : Plugin<Project> {
     val languageIdentifier = LanguageIdentifier(project.group.toString(), project.name, LanguageVersion.parse(project.version.toString()))
     val archiveFile = project.projectDir.resolve("target/${languageIdentifier.toFileString()}.spoofax-language")
 
-    project.tasks.registerSpoofaxBuildLanguageSpecTask()
-    val archiveTask = configureArchiveTask(project, languageIdentifier, archiveFile)
+    val spoofaxBuildLanguageSpecTask = project.tasks.register<SpoofaxBuildLanguageSpecTask>("spoofaxBuildLanguageSpec")
+    // Task that compiles Java sources depends on this task, as this task may generate Java source files.
+    project.tasks.named(JavaPlugin.COMPILE_JAVA_TASK_NAME).configure { dependsOn(spoofaxBuildLanguageSpecTask) }
+    // TODO: Are these needed?
+//    project.tasks.named(JavaPlugin.CLASSES_TASK_NAME).configure { dependsOn(spoofaxBuildLanguageSpecTask) }
+//    project.tasks.named(JavaPlugin.JAVADOC_TASK_NAME).configure { dependsOn(spoofaxBuildLanguageSpecTask) }
+//    project.tasks.named(JavaPlugin.JAR_TASK_NAME).configure { dependsOn(spoofaxBuildLanguageSpecTask) }
+//    project.tasks.matching { it.name == "sourcesJar" }.configureEach { dependsOn(spoofaxBuildLanguageSpecTask) }
+
+      val archiveTask = configureArchiveTask(project, languageIdentifier, archiveFile)
 
     val cleanTask = project.tasks.registerSpoofaxCleanTask()
     cleanTask.configureSafely {
@@ -137,7 +140,8 @@ class SpoofaxLanguageSpecificationPlugin : Plugin<Project> {
     extension: SpoofaxLangSpecExtension
   ) {
     // Add dependencies to corresponding configurations. // HACK: use shared Spoofax instance.
-    extension.addDependenciesToProject(SpoofaxInstance.getShared(project.gradle).spoofaxMeta.getLanguageSpecification(project).config())
+    val langSpec = SpoofaxInstance.getShared(project.gradle).spoofaxMeta.getLanguageSpecification(project)
+    extension.addDependenciesToProject(langSpec.config())
     // Add a dependency to Spoofax core.
     extension.addSpoofaxCoreDependency()
     // Add the Spoofax repository.
