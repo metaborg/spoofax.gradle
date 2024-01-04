@@ -6,7 +6,6 @@ plugins {
 
 spoofaxLanguageSpecification {
     val id = LanguageIdentifier("$group.test", name + "_test", LanguageVersion.parse("$version-test"))
-    println("Adding language contribution for: $id")
     languageContributions.add(LanguageContributionIdentifier(id, "lca"))
 }
 
