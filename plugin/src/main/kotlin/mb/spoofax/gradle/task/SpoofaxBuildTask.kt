@@ -17,6 +17,7 @@ import org.gradle.api.tasks.TaskProvider
 import org.gradle.kotlin.dsl.*
 import org.metaborg.core.action.CompileGoal
 import org.metaborg.core.build.BuildInputBuilder
+import org.metaborg.core.build.dependency.MissingDependencyException
 import org.metaborg.core.language.LanguageIdentifier
 import org.metaborg.core.messages.StreamMessagePrinter
 import org.metaborg.core.project.IProject
@@ -82,7 +83,12 @@ abstract class SpoofaxBuildTask : SpoofaxTask() {
         }
         addTransformGoal(CompileGoal())
       }
-      val buildInput = inputBuilder.build(dependencyService, languagePathService)
+      val buildInput = try {
+        inputBuilder.build(dependencyService, languagePathService)
+      } catch (ex: MissingDependencyException) {
+        val s = languageService.allComponents.joinToString(", ") { it.id().toString() }
+        throw MissingDependencyException("${ex.message}. Only these exist: $s", ex)
+      }
       val output = builder.build(buildInput)
       if(!output.success()) {
         throw GradleException("Spoofax build failed; errors encountered")
