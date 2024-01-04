@@ -3,7 +3,7 @@ id: org.metaborg:empty.test:0.1.0-SNAPSHOT
 name: empty
 dependencies:
   compile:
-  - org.metaborg:empty:0.1.0-SNAPSHOT
+  - org.metaborg:empty:does-not-exist
   - org.metaborg:org.metaborg.meta.lang.spt:${metaborgVersion}
 build:
   useBuildSystemSpec: true

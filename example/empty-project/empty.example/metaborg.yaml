@@ -3,7 +3,7 @@ id: org.metaborg:empty.example:0.1.0-SNAPSHOT
 name: empty
 dependencies:
   compile:
-  - org.metaborg:empty:0.1.0-SNAPSHOT
+    - org.metaborg:empty:does-not-exist
 debug:
   typesmart: false
 build:

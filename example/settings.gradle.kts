@@ -16,9 +16,9 @@ dependencyResolutionManagement {
 
 includeBuild("../plugin/")
 
-include(":empty:empty")
-include(":empty:empty.example")
-include(":empty:empty.test")
+include(":empty-project:empty")
+include(":empty-project:empty.example")
+include(":empty-project:empty.test")
 
 include(":stratego_format_override")
 
