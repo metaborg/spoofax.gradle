@@ -129,7 +129,9 @@ abstract class SpoofaxArchiveLanguageSpecTask : SpoofaxTask() {
       // Get language spec, with overridden configuration.
       val languageSpec = spoofaxMeta.getLanguageSpecification(project)
       // Ignore the metaborg.yaml ID and version, and use the Gradle group:name:version instead.
-      val wrappedLanguageSpec = GradleSpoofaxLanguageSpecWrapper(languageIdentifier.get(), languageSpec)
+      val wrappedLanguageSpec = GradleSpoofaxLanguageSpecWrapper(languageSpec,
+          identifier = languageIdentifier.get()
+      )
       val languageSpecBuildInput = LanguageSpecBuildInput(wrappedLanguageSpec)
 
       try {
