@@ -74,7 +74,7 @@ open class SpoofaxBasePlugin @Inject constructor(
       isCanBeResolved = false
       isVisible = false
       isTransitive = false // Not transitive, as language dependencies are not transitive.
-      attributes.attribute(Usage.USAGE_ATTRIBUTE, spoofaxLanguageUsage)
+      attributes.attribute(Usage.USAGE_ATTRIBUTE, spoofaxLanguageUsage) // org.gradle.usage=spoofax-language
     }
 
 
@@ -86,7 +86,7 @@ open class SpoofaxBasePlugin @Inject constructor(
       isVisible = false
       isTransitive = false // Not transitive, as language dependencies are not transitive.
       extendsFrom(compileLanguage)
-      attributes.attribute(Usage.USAGE_ATTRIBUTE, spoofaxLanguageUsage)
+      attributes.attribute(Usage.USAGE_ATTRIBUTE, spoofaxLanguageUsage) // org.gradle.usage = spoofax-language
     }
     project.configurations.create(sourceLanguageFiles) {
       description = "Language files for which sources are available"
@@ -95,7 +95,7 @@ open class SpoofaxBasePlugin @Inject constructor(
       isVisible = false
       isTransitive = false // Not transitive, as language dependencies are not transitive.
       extendsFrom(sourceLanguage)
-      attributes.attribute(Usage.USAGE_ATTRIBUTE, spoofaxLanguageUsage)
+      attributes.attribute(Usage.USAGE_ATTRIBUTE, spoofaxLanguageUsage) // org.gradle.usage = spoofax-language
     }
     project.configurations.create(languageFiles) {
       description = "Language files"
@@ -104,7 +104,7 @@ open class SpoofaxBasePlugin @Inject constructor(
       isVisible = false
       isTransitive = false // Not transitive, as language dependencies are not transitive.
       extendsFrom(compileLanguage, sourceLanguage)
-      attributes.attribute(Usage.USAGE_ATTRIBUTE, spoofaxLanguageUsage)
+      attributes.attribute(Usage.USAGE_ATTRIBUTE, spoofaxLanguageUsage) // org.gradle.usage = spoofax-language
     }
     project.configurations.create(sptLanguageFiles) {
       description = "SPT language files"
@@ -112,18 +112,15 @@ open class SpoofaxBasePlugin @Inject constructor(
       isCanBeResolved = true
       isVisible = false
       isTransitive = false // Not transitive, as language dependencies are not transitive.
-      attributes.attribute(Usage.USAGE_ATTRIBUTE, spoofaxLanguageUsage)
+      attributes.attribute(Usage.USAGE_ATTRIBUTE, spoofaxLanguageUsage) // org.gradle.usage = spoofax-language
       defaultDependencies {
         this.add(sptId.toGradleDependency(project))
       }
     }
 
-
-    /*
-    Make Usage attribute "java-runtime" compatible with "spoofax-language", such that Spoofax languages published to
-    a Maven repository by the Spoofax 2 Maven plugin, which have the Usage attribute "java-runtime", can be consumed
-    by this plugin.
-    */
+    // Make the org.gradle.usage attribute "java-runtime" compatible with "spoofax-language",
+    // such that Spoofax languages published to a Maven repository by the Spoofax 2 Maven plugin
+    // (which have the org.gradle.usage attribute "java-runtime") can be consumed by this plugin.
     project.dependencies.attributesSchema {
       attribute(Usage.USAGE_ATTRIBUTE) {
         compatibilityRules.add(SpoofaxUsageCompatibilityRules::class.java)

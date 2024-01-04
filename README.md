@@ -129,7 +129,7 @@ Therefore, if your language generates Java files in a [Java source set](https://
 A language specification can be tested with SPT files in the same project.
 However, it is also possible to test a language specification with tests in a separate project.
 
-Apply the test plugin to a project (a `build.gradle.kts)` file) as follows:
+Apply the test plugin to a project (a `build.gradle.kts` file) as follows:
 
 ```kotlin
 plugins {
