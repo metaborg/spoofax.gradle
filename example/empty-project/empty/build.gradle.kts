@@ -16,7 +16,7 @@ dependencies {
     compileLanguage(libs.spoofax.lang.esv)
     compileLanguage(libs.spoofax.lang.sdf3)
 
-    sourceLanguage(libs.spoofax2.meta.lib)
+    sourceLanguage(libs.spoofax2.meta.lib.spoofax)
 }
 
 spoofaxLanguageSpecification {
