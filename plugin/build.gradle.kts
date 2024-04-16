@@ -25,10 +25,6 @@ plugins {
   `maven-publish`
 }
 
-kotlinDslPluginOptions {
-  experimentalWarning.set(false)
-}
-
 var spoofax2Version: String
 var spoofax2CoreDependency: String
 val standaloneBuild = gradle.parent?.rootProject?.name == "spoofax.gradle.root"
