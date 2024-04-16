@@ -113,8 +113,13 @@ abstract class SpoofaxBuildLanguageSpecTask : SpoofaxTask() {
 
     project.pluginManager.withPlugin("java") {
       project.tasks.named(JavaPlugin.COMPILE_JAVA_TASK_NAME) { dependsOn(this@SpoofaxBuildLanguageSpecTask) }
-      project.tasks.named("sourcesJar") { dependsOn(this@SpoofaxBuildLanguageSpecTask) }
     }
+//    project.pluginManager.withPlugin("org.metaborg.gradle.config.java-library") {
+//      project.tasks.named("sourcesJar") { dependsOn(this@SpoofaxBuildLanguageSpecTask) }
+//    }
+//    project.pluginManager.withPlugin("org.metaborg.gradle.config.java-application") {
+//      project.tasks.named("sourcesJar") { dependsOn(this@SpoofaxBuildLanguageSpecTask) }
+//    }
   }
 
   @TaskAction
