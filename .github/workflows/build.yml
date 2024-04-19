@@ -12,7 +12,7 @@ on:  # yamllint disable-line rule:truthy
     branches:
       - master
       - develop
-      -
+
 jobs:
   build:
     name: Build
