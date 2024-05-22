@@ -14,7 +14,7 @@ buildscript {
     }
     dependencies {
       classpath("org.metaborg:gradle.config:0.4.8")
-      classpath("org.metaborg:gitonium:0.1.5")
+      classpath("org.metaborg:gitonium:1.1.0")
     }
   }
 }
