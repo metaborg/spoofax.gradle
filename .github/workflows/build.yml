@@ -27,6 +27,9 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
       - name: Validate Gradle wrapper
         uses: gradle/actions/wrapper-validation@v3
       - name: Setup JDK ${{ matrix.java }}
