@@ -3,13 +3,13 @@ All notable changes to this project are documented in this file, based on [Keep 
 
 
 ## [Unreleased] - yyyy-mm-dd
-- Fix Gradle task dependencies.
-- Remove compatibility with Gradle < 6.
 
 
 ## [0.5.9] - 2024-05-24
 ### Changed
 - Support [Spoofax 2.5.20](https://spoofax.dev/release/note/2.5.20/)
+- Fix Gradle task dependencies.
+- Remove compatibility with Gradle < 6.
 
 
 ## [0.5.8] - 2023-09-21
