@@ -3,6 +3,8 @@ All notable changes to this project are documented in this file, based on [Keep 
 
 
 ## [Unreleased] - yyyy-mm-dd
+- Fix Gradle task dependencies.
+- Remove compatibility with Gradle < 6.
 
 
 ## [0.5.9] - 2024-05-24
