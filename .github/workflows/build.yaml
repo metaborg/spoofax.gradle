@@ -5,11 +5,13 @@ on:  # yamllint disable-line rule:truthy
   push:
     branches:
       - master
+      - develop
     tags:
       - "release-*.*.*"
   pull_request:
     branches:
       - master
+      - develop
 
 jobs:
   build:
