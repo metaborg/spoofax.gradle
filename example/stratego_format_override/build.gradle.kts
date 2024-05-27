@@ -1,7 +1,7 @@
 plugins {
-  id("org.metaborg.spoofax.gradle.langspec")
+    id("org.metaborg.spoofax.gradle.langspec")
 }
 
 spoofaxLanguageSpecification {
-  strategoFormat.set(org.metaborg.spoofax.meta.core.config.StrategoFormat.jar)
+    strategoFormat.set(org.metaborg.spoofax.meta.core.config.StrategoFormat.jar)
 }
