@@ -1,10 +1,18 @@
-[![GitHub license](https://img.shields.io/github/license/metaborg/spoofax.gradle)](https://github.com/metaborg/spoofax.gradle/blob/master/LICENSE)
-[![Jenkins](https://img.shields.io/jenkins/build/https/buildfarm.metaborg.org/job/metaborg/job/spoofax.gradle/job/master)](https://buildfarm.metaborg.org/job/metaborg/job/spoofax.gradle/job/master/lastBuild)
-[![Release](https://img.shields.io/nexus/public/org.metaborg/spoofax.gradle?server=https%3A%2F%2Fartifacts.metaborg.org%2F&label=latest&color=brightgreen)](https://artifacts.metaborg.org/content/repositories/releases/org/metaborg/spoofax.gradle/)
-[![Artifact](https://img.shields.io/maven-metadata/v?label=gradle.config&metadataUrl=https%3A%2F%2Fartifacts.metaborg.org%2Fcontent%2Frepositories%2Freleases%2Forg%2Fmetaborg%2Fspoofax.gradle%2Fmaven-metadata.xml)](https://mvnrepository.com/artifact/org.metaborg/spoofax.gradle?repo=metaborg-releases)
+# Spoofax Gradle Plugin
+[![Build][github-badge:build]][github:build]
+[![License][license-badge]][license]
+[![GitHub Release][github-badge:release]][github:release]
 
-# Spoofax Gradle
-Spoofax Gradle is a Gradle plugin for building and using Spoofax language specifications.
+A Gradle plugin for building and using Spoofax language specifications.
+
+| Artifact                                      | Latest Release                                                                                                       |
+|-----------------------------------------------|----------------------------------------------------------------------------------------------------------------------|
+| `org.metaborg.devenv.spoofax.gradle.base`     | [![org.metaborg.devenv.spoofax.gradle.base][maven-badge:spoofax.gradle.base]][maven:spoofax.gradle.base]             |
+| `org.metaborg.devenv.spoofax.gradle.langspec` | [![org.metaborg.devenv.spoofax.gradle.langspec][maven-badge:spoofax.gradle.langspec]][maven:spoofax.gradle.langspec] |
+| `org.metaborg.devenv.spoofax.gradle.project`  | [![org.metaborg.devenv.spoofax.gradle.project][maven-badge:spoofax.gradle.project]][maven:spoofax.gradle.project]    |
+| `org.metaborg.devenv.spoofax.gradle.test`     | [![org.metaborg.devenv.spoofax.gradle.test][maven-badge:spoofax.gradle.test]][maven:spoofax.gradle.test]             |
+
+
 
 ## Requirements
 Gradle 6.1 or higher is required.
@@ -47,7 +55,7 @@ Apply the `langspec` plugin to a project (a `build.gradle.kts` file) as follows:
 
 ```kotlin
 plugins {
-  id("org.metaborg.spoofax.gradle.langspec") version("0.5.8")
+  id("org.metaborg.spoofax.gradle.langspec") version "<version>"
 }
 ```
 
@@ -116,7 +124,7 @@ Apply the project plugin to a project (a build.gradle(.kts) file) as follows:
 
 ```kotlin
 plugins {
-  id("org.metaborg.spoofax.gradle.project") version("0.5.8")
+  id("org.metaborg.spoofax.gradle.project") version "<version>"
 }
 ```
 
@@ -134,7 +142,7 @@ Apply the test plugin to a project (a `build.gradle.kts)` file) as follows:
 
 ```kotlin
 plugins {
-  id("org.metaborg.spoofax.gradle.test") version("0.5.8")
+  id("org.metaborg.spoofax.gradle.test") version "<version>"
 }
 ```
 
@@ -156,3 +164,31 @@ dependencies {
 
 ## Examples
 The `example` directory of this repository has several examples using this plugin.
+
+
+
+## License
+Copyright 2020-2024 Delft University of Technology
+
+Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the License at <https://www.apache.org/licenses/LICENSE-2.0>
+
+Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an **"as is" basis, without warranties or conditions of any kind**, either express or implied. See the License for the specific language governing permissions and limitations under the License.
+
+
+
+[github-badge:build]: https://img.shields.io/github/actions/workflow/status/metaborg/spoofax.gradle/build.yaml
+[github:build]: https://github.com/metaborg/spoofax.gradle/actions
+[license-badge]: https://img.shields.io/github/license/metaborg/spoofax.gradle
+[license]: https://github.com/metaborg/spoofax.gradle/blob/master/LICENSE
+[github-badge:release]: https://img.shields.io/github/v/release/metaborg/spoofax.gradle
+[github:release]: https://github.com/metaborg/spoofax.gradle/releases
+
+[maven:spoofax.gradle.base]:         https://artifacts.metaborg.org/#nexus-search;gav~org.metaborg.devenv.spoofax.gradle.base~org.metaborg.devenv.spoofax.gradle.base.gradle.plugin~~~
+[maven:spoofax.gradle.langspec]:     https://artifacts.metaborg.org/#nexus-search;gav~org.metaborg.devenv.spoofax.gradle.langspec~org.metaborg.devenv.spoofax.gradle.langspec.gradle.plugin~~~
+[maven:spoofax.gradle.project]:      https://artifacts.metaborg.org/#nexus-search;gav~org.metaborg.devenv.spoofax.gradle.project~org.metaborg.devenv.spoofax.gradle.project.gradle.plugin~~~
+[maven:spoofax.gradle.test]:         https://artifacts.metaborg.org/#nexus-search;gav~org.metaborg.devenv.spoofax.gradle.test~org.metaborg.devenv.spoofax.gradle.test¾.gradle.plugin~~~
+
+[maven-badge:spoofax.gradle.base]:      https://img.shields.io/maven-metadata/v?metadataUrl=https%3A%2F%2Fartifacts.metaborg.org%2Fcontent%2Frepositories%2Freleases%2Forg%2Fmetaborg%2Fdevenv%2Fspoofax%2Fgradle%2Fbase%2Forg.metaborg.devenv.spoofax.gradle.base.gradle.plugin%2Fmaven-metadata.xml
+[maven-badge:spoofax.gradle.langspec]:  https://img.shields.io/maven-metadata/v?metadataUrl=https%3A%2F%2Fartifacts.metaborg.org%2Fcontent%2Frepositories%2Freleases%2Forg%2Fmetaborg%2Fdevenv%2Fspoofax%2Fgradle%2Flangspec%2Forg.metaborg.devenv.spoofax.gradle.langspec.gradle.plugin%2Fmaven-metadata.xml
+[maven-badge:spoofax.gradle.project]:   https://img.shields.io/maven-metadata/v?metadataUrl=https%3A%2F%2Fartifacts.metaborg.org%2Fcontent%2Frepositories%2Freleases%2Forg%2Fmetaborg%2Fdevenv%2Fspoofax%2Fgradle%2Fproject%2Forg.metaborg.devenv.spoofax.gradle.project.gradle.plugin%2Fmaven-metadata.xml
+[maven-badge:spoofax.gradle.test]:      https://img.shields.io/maven-metadata/v?metadataUrl=https%3A%2F%2Fartifacts.metaborg.org%2Fcontent%2Frepositories%2Freleases%2Forg%2Fmetaborg%2Fdevenv%2Fspoofax%2Fgradle%2Ftest%2Forg.metaborg.devenv.spoofax.gradle.test.gradle.plugin%2Fmaven-metadata.xml
