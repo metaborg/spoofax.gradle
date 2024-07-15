@@ -1,7 +1,15 @@
 plugins {
+    `java-library`
+    id("org.metaborg.convention.java")
     id("org.metaborg.devenv.spoofax.gradle.project")
 }
 
 dependencies {
     compileLanguage(project(":empty"))
+}
+
+spoofaxProject {
+    // Fixes: Could not resolve all dependencies for configuration '<project>:compileClasspath'.
+    //  The project declares repositories, effectively ignoring the repositories you have declared in the settings.
+    addSpoofaxRepository.set(false)
 }

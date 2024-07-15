@@ -11,7 +11,7 @@
 @Suppress("DSL_SCOPE_VIOLATION")
 plugins {
     `java-library`
-    alias(libs.plugins.gitonium)   // Bootstrap with previous version
+    alias(libs.plugins.gitonium)
     id("org.metaborg.convention.java")
     id("org.metaborg.convention.maven-publish")
     `kotlin-dsl`
