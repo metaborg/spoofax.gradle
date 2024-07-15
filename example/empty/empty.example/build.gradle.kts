@@ -1,5 +1,5 @@
 plugins {
-    id("org.metaborg.spoofax.gradle.project")
+    id("org.metaborg.devenv.spoofax.gradle.project")
 }
 
 dependencies {

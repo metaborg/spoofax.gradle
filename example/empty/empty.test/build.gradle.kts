@@ -1,5 +1,5 @@
 plugins {
-    id("org.metaborg.spoofax.gradle.test")
+    id("org.metaborg.devenv.spoofax.gradle.test")
 }
 
 spoofaxTest {
