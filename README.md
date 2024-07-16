@@ -5,12 +5,12 @@
 
 A Gradle plugin for building and using Spoofax language specifications.
 
-| Artifact                                      | Latest Release                                                                                                       |
-|-----------------------------------------------|----------------------------------------------------------------------------------------------------------------------|
-| `org.metaborg.devenv.spoofax.gradle.base`     | [![org.metaborg.devenv.spoofax.gradle.base][maven-badge:spoofax.gradle.base]][maven:spoofax.gradle.base]             |
-| `org.metaborg.devenv.spoofax.gradle.langspec` | [![org.metaborg.devenv.spoofax.gradle.langspec][maven-badge:spoofax.gradle.langspec]][maven:spoofax.gradle.langspec] |
-| `org.metaborg.devenv.spoofax.gradle.project`  | [![org.metaborg.devenv.spoofax.gradle.project][maven-badge:spoofax.gradle.project]][maven:spoofax.gradle.project]    |
-| `org.metaborg.devenv.spoofax.gradle.test`     | [![org.metaborg.devenv.spoofax.gradle.test][maven-badge:spoofax.gradle.test]][maven:spoofax.gradle.test]             |
+| Gradle Plugin                                                                | Latest Release                                                                        | Latest Snapshot                                                                        |
+|------------------------------------------------------------------------------|---------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------|
+| [`org.metaborg.devenv.spoofax.gradle.base`][mvn:spoofax.gradle.base]         | ![org.metaborg.devenv.spoofax.gradle.base][mvn-rel-badge:spoofax.gradle.base]         | ![org.metaborg.devenv.spoofax.gradle.base][mvn-snap-badge:spoofax.gradle.base]         |
+| [`org.metaborg.devenv.spoofax.gradle.langspec`][mvn:spoofax.gradle.langspec] | ![org.metaborg.devenv.spoofax.gradle.langspec][mvn-rel-badge:spoofax.gradle.langspec] | ![org.metaborg.devenv.spoofax.gradle.langspec][mvn-snap-badge:spoofax.gradle.langspec] |
+| [`org.metaborg.devenv.spoofax.gradle.project`][mvn:spoofax.gradle.project]   | ![org.metaborg.devenv.spoofax.gradle.project][mvn-rel-badge:spoofax.gradle.project]   | ![org.metaborg.devenv.spoofax.gradle.project][mvn-snap-badge:spoofax.gradle.project]   |
+| [`org.metaborg.devenv.spoofax.gradle.test`][mvn:spoofax.gradle.test]         | ![org.metaborg.devenv.spoofax.gradle.test][mvn-rel-badge:spoofax.gradle.test]         | ![org.metaborg.devenv.spoofax.gradle.test][mvn-snap-badge:spoofax.gradle.test]         |
 
 
 
@@ -180,15 +180,20 @@ Unless required by applicable law or agreed to in writing, software distributed 
 [github:build]: https://github.com/metaborg/spoofax.gradle/actions
 [license-badge]: https://img.shields.io/github/license/metaborg/spoofax.gradle
 [license]: https://github.com/metaborg/spoofax.gradle/blob/master/LICENSE
-[github-badge:release]: https://img.shields.io/github/v/release/metaborg/spoofax.gradle
+[github-badge:release]: https://img.shields.io/github/v/release/metaborg/spoofax.gradle?display_name=release
 [github:release]: https://github.com/metaborg/spoofax.gradle/releases
 
-[maven:spoofax.gradle.base]:         https://artifacts.metaborg.org/#nexus-search;gav~org.metaborg.devenv.spoofax.gradle.base~org.metaborg.devenv.spoofax.gradle.base.gradle.plugin~~~
-[maven:spoofax.gradle.langspec]:     https://artifacts.metaborg.org/#nexus-search;gav~org.metaborg.devenv.spoofax.gradle.langspec~org.metaborg.devenv.spoofax.gradle.langspec.gradle.plugin~~~
-[maven:spoofax.gradle.project]:      https://artifacts.metaborg.org/#nexus-search;gav~org.metaborg.devenv.spoofax.gradle.project~org.metaborg.devenv.spoofax.gradle.project.gradle.plugin~~~
-[maven:spoofax.gradle.test]:         https://artifacts.metaborg.org/#nexus-search;gav~org.metaborg.devenv.spoofax.gradle.test~org.metaborg.devenv.spoofax.gradle.test¾.gradle.plugin~~~
+[mvn:spoofax.gradle.base]:         https://artifacts.metaborg.org/#nexus-search;gav~org.metaborg.devenv.spoofax.gradle.base~org.metaborg.devenv.spoofax.gradle.base.gradle.plugin~~~
+[mvn:spoofax.gradle.langspec]:     https://artifacts.metaborg.org/#nexus-search;gav~org.metaborg.devenv.spoofax.gradle.langspec~org.metaborg.devenv.spoofax.gradle.langspec.gradle.plugin~~~
+[mvn:spoofax.gradle.project]:      https://artifacts.metaborg.org/#nexus-search;gav~org.metaborg.devenv.spoofax.gradle.project~org.metaborg.devenv.spoofax.gradle.project.gradle.plugin~~~
+[mvn:spoofax.gradle.test]:         https://artifacts.metaborg.org/#nexus-search;gav~org.metaborg.devenv.spoofax.gradle.test~org.metaborg.devenv.spoofax.gradle.test¾.gradle.plugin~~~
 
-[maven-badge:spoofax.gradle.base]:      https://img.shields.io/maven-metadata/v?metadataUrl=https%3A%2F%2Fartifacts.metaborg.org%2Fcontent%2Frepositories%2Freleases%2Forg%2Fmetaborg%2Fdevenv%2Fspoofax%2Fgradle%2Fbase%2Forg.metaborg.devenv.spoofax.gradle.base.gradle.plugin%2Fmaven-metadata.xml
-[maven-badge:spoofax.gradle.langspec]:  https://img.shields.io/maven-metadata/v?metadataUrl=https%3A%2F%2Fartifacts.metaborg.org%2Fcontent%2Frepositories%2Freleases%2Forg%2Fmetaborg%2Fdevenv%2Fspoofax%2Fgradle%2Flangspec%2Forg.metaborg.devenv.spoofax.gradle.langspec.gradle.plugin%2Fmaven-metadata.xml
-[maven-badge:spoofax.gradle.project]:   https://img.shields.io/maven-metadata/v?metadataUrl=https%3A%2F%2Fartifacts.metaborg.org%2Fcontent%2Frepositories%2Freleases%2Forg%2Fmetaborg%2Fdevenv%2Fspoofax%2Fgradle%2Fproject%2Forg.metaborg.devenv.spoofax.gradle.project.gradle.plugin%2Fmaven-metadata.xml
-[maven-badge:spoofax.gradle.test]:      https://img.shields.io/maven-metadata/v?metadataUrl=https%3A%2F%2Fartifacts.metaborg.org%2Fcontent%2Frepositories%2Freleases%2Forg%2Fmetaborg%2Fdevenv%2Fspoofax%2Fgradle%2Ftest%2Forg.metaborg.devenv.spoofax.gradle.test.gradle.plugin%2Fmaven-metadata.xml
+[mvn-rel-badge:spoofax.gradle.base]:      https://img.shields.io/nexus/r/org.metaborg.devenv.spoofax.gradle.base/org.metaborg.devenv.spoofax.gradle.base.gradle.plugin?server=https%3A%2F%2Fartifacts.metaborg.org&label=%20
+[mvn-rel-badge:spoofax.gradle.langspec]:  https://img.shields.io/nexus/r/org.metaborg.devenv.spoofax.gradle.langspec/org.metaborg.devenv.spoofax.gradle.langspec.gradle.plugin?server=https%3A%2F%2Fartifacts.metaborg.org&label=%20
+[mvn-rel-badge:spoofax.gradle.project]:   https://img.shields.io/nexus/r/org.metaborg.devenv.spoofax.gradle.project/org.metaborg.devenv.spoofax.gradle.project.gradle.plugin?server=https%3A%2F%2Fartifacts.metaborg.org&label=%20
+[mvn-rel-badge:spoofax.gradle.test]:      https://img.shields.io/nexus/r/org.metaborg.devenv.spoofax.gradle.test/org.metaborg.devenv.spoofax.gradle.test.gradle.plugin?server=https%3A%2F%2Fartifacts.metaborg.org&label=%20
+
+[mvn-snap-badge:spoofax.gradle.base]:      https://img.shields.io/nexus/s/org.metaborg.devenv.spoofax.gradle.base/org.metaborg.devenv.spoofax.gradle.base.gradle.plugin?server=https%3A%2F%2Fartifacts.metaborg.org&label=%20
+[mvn-snap-badge:spoofax.gradle.langspec]:  https://img.shields.io/nexus/s/org.metaborg.devenv.spoofax.gradle.langspec/org.metaborg.devenv.spoofax.gradle.langspec.gradle.plugin?server=https%3A%2F%2Fartifacts.metaborg.org&label=%20
+[mvn-snap-badge:spoofax.gradle.project]:   https://img.shields.io/nexus/s/org.metaborg.devenv.spoofax.gradle.project/org.metaborg.devenv.spoofax.gradle.project.gradle.plugin?server=https%3A%2F%2Fartifacts.metaborg.org&label=%20
+[mvn-snap-badge:spoofax.gradle.test]:      https://img.shields.io/nexus/s/org.metaborg.devenv.spoofax.gradle.test/org.metaborg.devenv.spoofax.gradle.test.gradle.plugin?server=https%3A%2F%2Fartifacts.metaborg.org&label=%20
