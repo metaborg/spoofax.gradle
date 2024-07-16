@@ -10,10 +10,8 @@ plugins {
     id("org.metaborg.devenv.spoofax.gradle.test") apply false
 }
 
-// Workaround for issue: https://github.com/gradle/gradle/issues/20131
-println("")
-
-
-subprojects {
+allprojects {
+    apply(plugin = "org.metaborg.gitonium")
+    version = gitonium.version
     group = "org.metaborg"
 }
