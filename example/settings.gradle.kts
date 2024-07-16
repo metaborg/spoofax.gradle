@@ -7,7 +7,7 @@ pluginManagement {
 }
 
 plugins {
-    id("org.metaborg.convention.settings") version "0.6.6"
+    id("org.metaborg.convention.settings") version "0.6.11"
 }
 
 fun String.includeProject(id: String, path: String = "$this/$id") {
