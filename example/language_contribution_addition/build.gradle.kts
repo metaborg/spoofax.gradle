@@ -9,6 +9,7 @@ plugins {
 spoofaxLanguageSpecification {
     languageContributions.add(LanguageContributionIdentifier(
         LanguageIdentifier("$group.test", "${name}_test", LanguageVersion.parse("$version-test")), "lca"))
+
     // Fixes: Could not resolve all dependencies for configuration '<project>:compileClasspath'.
     //  The project declares repositories, effectively ignoring the repositories you have declared in the settings.
     addSpoofaxRepository.set(false)

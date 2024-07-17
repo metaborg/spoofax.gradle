@@ -6,6 +6,7 @@ plugins {
 
 spoofaxLanguageSpecification {
     strategoFormat.set(org.metaborg.spoofax.meta.core.config.StrategoFormat.jar)
+
     // Fixes: Could not resolve all dependencies for configuration '<project>:compileClasspath'.
     //  The project declares repositories, effectively ignoring the repositories you have declared in the settings.
     addSpoofaxRepository.set(false)
