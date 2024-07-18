@@ -96,8 +96,7 @@ internal fun SpoofaxExtensionBase.overrideIdentifiers(configOverrides: SpoofaxGr
   configOverrides.update(project) {
     groupId = project.group.toString()
     id = project.name
-    val versionStr = project.version.toString()
-    version = if(versionStr != Project.DEFAULT_VERSION) LanguageVersion.parse(versionStr) else null
+    version = LanguageVersion.parse(project.version.toString())
   }
 }
 
