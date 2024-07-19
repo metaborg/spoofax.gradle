@@ -6,6 +6,8 @@ plugins {
 
 dependencies {
     compileLanguage(project(":empty"))
+    
+    compileOnly(libs.spoofax.core)
 }
 
 spoofaxProject {
@@ -14,8 +16,4 @@ spoofaxProject {
     addSpoofaxRepository.set(false)
     // Fixes: Could not find org.metaborg:org.metaborg.spoofax.core:property(java.lang.String)
     addSpoofaxCoreDependency.set(false)
-}
-
-dependencies {
-    compileOnly(libs.spoofax.core)
 }
