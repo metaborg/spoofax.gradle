@@ -21,7 +21,7 @@ plugins {
 group = "org.metaborg.devenv"
 
 dependencies {
-    api(libs.spoofax2.meta.core)
+    api(libs.spoofax.meta.core)
     api(libs.spt.core)
 
     /*

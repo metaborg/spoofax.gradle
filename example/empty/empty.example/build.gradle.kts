@@ -17,5 +17,5 @@ spoofaxProject {
 }
 
 dependencies {
-    compileOnly(libs.spoofax2.core)
+    compileOnly(libs.spoofax.core)
 }

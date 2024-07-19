@@ -7,6 +7,9 @@ plugins {
 }
 
 spoofaxLanguageSpecification {
+    addCompileDependenciesFromMetaborgYaml.set(false)
+    addSourceDependenciesFromMetaborgYaml.set(false)
+
     languageContributions.add(LanguageContributionIdentifier(
         LanguageIdentifier("$group.test", "${name}_test", LanguageVersion.parse("$version-test")), "lca"))
 
@@ -18,5 +21,5 @@ spoofaxLanguageSpecification {
 }
 
 dependencies {
-    compileOnly(libs.spoofax2.core)
+    compileOnly(libs.spoofax.core)
 }

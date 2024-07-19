@@ -15,5 +15,5 @@ spoofaxTest {
 
 dependencies {
     compileLanguage(project(":empty"))
-    compileOnly(libs.spoofax2.core)
+    compileOnly(libs.spoofax.core)
 }

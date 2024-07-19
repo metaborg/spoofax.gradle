@@ -5,6 +5,9 @@ plugins {
 }
 
 spoofaxLanguageSpecification {
+    addCompileDependenciesFromMetaborgYaml.set(false)
+    addSourceDependenciesFromMetaborgYaml.set(false)
+
     // Fixes: Could not resolve all dependencies for configuration '<project>:compileClasspath'.
     //  The project declares repositories, effectively ignoring the repositories you have declared in the settings.
     addSpoofaxRepository.set(false)
@@ -13,5 +16,10 @@ spoofaxLanguageSpecification {
 }
 
 dependencies {
-    compileOnly(libs.spoofax2.core)
+    compileLanguage(libs.esv.lang)
+    compileLanguage(libs.sdf3.lang)
+
+    sourceLanguage(libs.meta.lib.spoofax)
+
+    compileOnly(libs.spoofax.core)
 }

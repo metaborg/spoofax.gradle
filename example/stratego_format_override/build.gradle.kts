@@ -5,6 +5,9 @@ plugins {
 }
 
 spoofaxLanguageSpecification {
+    addCompileDependenciesFromMetaborgYaml.set(false)
+    addSourceDependenciesFromMetaborgYaml.set(false)
+
     strategoFormat.set(org.metaborg.spoofax.meta.core.config.StrategoFormat.jar)
 
     // Fixes: Could not resolve all dependencies for configuration '<project>:compileClasspath'.
@@ -15,5 +18,10 @@ spoofaxLanguageSpecification {
 }
 
 dependencies {
-    compileOnly(libs.spoofax2.core)
+    compileLanguage(libs.esv.lang)
+    compileLanguage(libs.sdf3.lang)
+
+    sourceLanguage(libs.meta.lib.spoofax)
+
+    compileOnly(libs.spoofax.core)
 }
