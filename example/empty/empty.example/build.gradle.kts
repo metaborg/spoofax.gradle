@@ -17,6 +17,8 @@ spoofaxProject {
 
 
 dependencies {
+    api(platform(libs.metaborg.platform)) { version { require("latest.integration") } }
+
     compileLanguage(project(":empty"))
 
     compileOnly(libs.spoofax.core)

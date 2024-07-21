@@ -102,6 +102,11 @@ internal fun SpoofaxExtensionBase.overrideIdentifiers(configOverrides: SpoofaxGr
 
 internal fun SpoofaxExtensionBase.overrideDependencies(configOverrides: SpoofaxGradleConfigOverrides) {
   configOverrides.update(project) {
+      // FIXME: Cannot use a plarform(...) dependency, as you'll get an error later in the pipeline that the platform
+      //  dependency is not a Spoofax language. It is not clear how to distinguish normal from platform or enforcePlatform
+      //  dependencies.
+      // TODO: I think this should become `project.compileLanguageFiles.incoming.resolutionResult`, but I'm not sure what
+      //  to do with project(...) dependencies, as they don't have a group:module:version ID.
     compileDeps = project.compileLanguageFiles.resolvedConfiguration.firstLevelModuleDependencies.map {
       it.toSpoofaxDependency()
     }
