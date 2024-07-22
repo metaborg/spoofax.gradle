@@ -13,8 +13,8 @@ buildscript {
             maven("https://artifacts.metaborg.org/content/groups/public/")
         }
         dependencies {
-            classpath("org.metaborg:gradle.config:0.7.1")
             classpath("org.metaborg:gitonium:1.1.0")
+            classpath("org.metaborg:gradle.config:0.7.3")
         }
     }
 }
