@@ -63,8 +63,8 @@ if (standaloneBuild) { // If standalone build, apply additional plugins and set 
 }
 
 configure<JavaPluginExtension> {
-    sourceCompatibility = JavaVersion.VERSION_17
-    targetCompatibility = JavaVersion.VERSION_17
+    sourceCompatibility = JavaVersion.VERSION_11
+    targetCompatibility = JavaVersion.VERSION_11
 }
 configure<mb.gradle.config.MetaborgExtension> {
     kotlinApiVersion = "1.2"
