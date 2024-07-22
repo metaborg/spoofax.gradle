@@ -67,8 +67,8 @@ configure<JavaPluginExtension> {
     targetCompatibility = JavaVersion.VERSION_11
 }
 configure<mb.gradle.config.MetaborgExtension> {
-    kotlinApiVersion = "1.2"
-    kotlinLanguageVersion = "1.2"
+    kotlinApiVersion = "1.3"
+    kotlinLanguageVersion = "1.3"
 }
 
 dependencies {
