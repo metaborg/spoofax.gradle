@@ -9,5 +9,6 @@ plugins {
     id("org.metaborg.devenv.spoofax.gradle.test") apply false
 }
 
-// Workaround for issue: https://github.com/gradle/gradle/issues/20131
-println("")
+rootProjectConvention {
+    registerStubPublishTasks.set(true)
+}

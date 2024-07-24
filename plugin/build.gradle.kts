@@ -1,11 +1,4 @@
-/**
- * The Spoofax Gradle plugin can be built standalone (i.e., when running `./gradlew buildAll` from the root of this
- * repository), or can be built as part of the devenv repository. When built standalone, we depend on Spoofax 2
- * artifacts directly. When built as part of devenv, we depend on the devenv (denoted by 'org.metaborg.devenv' group ID)
- * versions of Spoofax 2 artifacts, and also publish this plugin as a separate devenv artifact. To use this plugin as
- * part of devenv, you must insert '.devenv' after 'org.metaborg' in the artifact ID. For example:
- * `plugins { id("org.metaborg.devenv.spoofax.gradle.langspec") }`
- */
+import org.metaborg.convention.Developer
 
 // Workaround for issue: https://youtrack.jetbrains.com/issue/KTIJ-19369
 @Suppress("DSL_SCOPE_VIOLATION")
@@ -15,8 +8,16 @@ plugins {
     id("org.metaborg.convention.maven-publish")
     `kotlin-dsl`
     `java-gradle-plugin`
+    alias(libs.plugins.gitonium)
 }
 
+// Configure Gitonium before setting the version
+gitonium {
+    mainBranch.set("master")
+    tagPrefix.set("devenv-release/")
+}
+
+version = gitonium.version
 group = "org.metaborg.devenv"
 
 dependencies {
@@ -97,7 +98,16 @@ sourceSets {
 //    }
 //}
 
+
 mavenPublishConvention {
     repoOwner.set("metaborg")
     repoName.set("spoofax.gradle")
+
+    metadata {
+        inceptionYear.set("2019")
+        developers.set(listOf(
+            Developer("Gohla", "Gabriel Konat", "gabrielkonat@gmail.com"),
+            Developer("Virtlink", "Daniel A. A. Pelsmaeker", "developer@pelsmaeker.net"),
+        ))
+    }
 }

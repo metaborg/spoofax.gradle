@@ -14,6 +14,7 @@ allprojects {
     // Configure Gitonium before setting the version
     gitonium {
         mainBranch.set("master")
+        tagPrefix.set("devenv-release/")
     }
 
     version = gitonium.version
@@ -33,4 +34,8 @@ allprojects {
             }
         }
     }
+}
+
+rootProjectConvention {
+    registerPublishTasks.set(true)
 }
