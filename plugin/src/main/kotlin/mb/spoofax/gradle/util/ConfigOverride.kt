@@ -107,12 +107,12 @@ internal fun SpoofaxExtensionBase.overrideDependencies(configOverrides: SpoofaxG
       //  dependencies.
       // TODO: I think this should become `project.compileLanguageFiles.incoming.resolutionResult`, but I'm not sure what
       //  to do with project(...) dependencies, as they don't have a group:module:version ID.
-    compileDeps = project.compileLanguageFiles.resolvedConfiguration.firstLevelModuleDependencies.map {
-      it.toSpoofaxDependency()
-    }
-    sourceDeps = project.sourceLanguageFiles.resolvedConfiguration.firstLevelModuleDependencies.map {
-      it.toSpoofaxDependency()
-    }
+    compileDeps = project.compileLanguageFiles.resolvedConfiguration.firstLevelModuleDependencies
+        .filterNot { it.module.id.group == "org.metaborg" && it.module.id.name == "platform" }
+        .map { it.toSpoofaxDependency() }
+    sourceDeps = project.sourceLanguageFiles.resolvedConfiguration.firstLevelModuleDependencies
+        .filterNot { it.module.id.group == "org.metaborg" && it.module.id.name == "platform" }
+        .map { it.toSpoofaxDependency() }
     if(project.plugins.hasPlugin(JavaPlugin::class.java)) {
       project.configurations.getByName(JavaPlugin.COMPILE_CLASSPATH_CONFIGURATION_NAME).resolvedConfiguration.firstLevelModuleDependencies.map {
         it.toSpoofaxDependency()

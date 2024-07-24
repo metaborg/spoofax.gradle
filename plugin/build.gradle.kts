@@ -21,6 +21,8 @@ version = gitonium.version
 group = "org.metaborg.devenv"
 
 dependencies {
+    api(platform(libs.metaborg.platform))
+
     api(libs.spoofax.meta.core)
     api(libs.spt.core)
 

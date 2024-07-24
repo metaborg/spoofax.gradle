@@ -16,7 +16,7 @@ spoofaxLanguageSpecification {
 }
 
 dependencies {
-    api(platform(libs.metaborg.platform)) { version { require("latest.integration") } }
+    api(platform(libs.metaborg.platform))
 
     compileLanguage(libs.esv.lang)
     compileLanguage(libs.sdf3.lang)
