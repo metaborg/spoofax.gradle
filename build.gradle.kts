@@ -10,6 +10,11 @@ plugins {
 allprojects {
     apply(plugin = "org.metaborg.gitonium")
 
+    // Configure Gitonium before setting the version
+    gitonium {
+        mainBranch.set("master")
+    }
+
     version = gitonium.version
     group = "org.metaborg.devenv"
 
@@ -17,6 +22,14 @@ allprojects {
         extensions.configure(MavenPublishConventionExtension::class.java) {
             repoOwner.set("metaborg")
             repoName.set("spoofax.gradle")
+
+            metadata {
+                inceptionYear.set("2019")
+                developers.set(listOf(
+                    Developer("Gohla", "Gabriel Konat", "gabrielkonat@gmail.com"),
+                    Developer("Virtlink", "Daniel A. A. Pelsmaeker", "developer@pelsmaeker.net"),
+                ))
+            }
         }
     }
 }
