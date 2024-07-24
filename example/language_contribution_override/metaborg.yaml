@@ -1,6 +1,7 @@
 ---
 id: org.metaborg:language_contribution_override:0.1.0-SNAPSHOT
 name: language_contribution_override
+metaborgVersion: 2.6.0-SNAPSHOT
 contributions:
   - name: language_contribution_override
     id: org.metaborg:language_contribution_override:0.1.0-SNAPSHOT

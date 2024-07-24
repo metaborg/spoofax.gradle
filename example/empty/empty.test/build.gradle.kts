@@ -1,11 +1,11 @@
 plugins {
-  id("org.metaborg.spoofax.gradle.test")
+    id("org.metaborg.spoofax.gradle.test")
 }
 
 spoofaxTest {
-  languageUnderTest.set(org.metaborg.core.language.LanguageIdentifier.parse("$group:empty:$version"))
+    languageUnderTest.set(org.metaborg.core.language.LanguageIdentifier.parse("$group:empty:$version"))
 }
 
 dependencies {
-  compileLanguage(project(":empty"))
+    compileLanguage(project(":empty"))
 }
