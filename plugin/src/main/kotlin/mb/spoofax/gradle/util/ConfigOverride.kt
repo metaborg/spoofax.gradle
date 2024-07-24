@@ -32,7 +32,7 @@ import org.metaborg.spoofax.meta.core.config.SpoofaxLanguageSpecConfigBuilder
 import org.metaborg.spoofax.meta.core.config.SpoofaxLanguageSpecConfigService
 import org.metaborg.spoofax.meta.core.config.StrategoFormat
 import java.io.File
-import javax.inject.Inject
+import jakarta.inject.Inject
 
 data class ConfigOverride(
   var metaborgVersion: String? = null,
