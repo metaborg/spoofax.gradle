@@ -1,3 +1,4 @@
+import org.metaborg.convention.Developer
 import org.metaborg.convention.MavenPublishConventionExtension
 
 // Workaround for issue: https://youtrack.jetbrains.com/issue/KTIJ-19369
