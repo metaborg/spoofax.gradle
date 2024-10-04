@@ -14,6 +14,7 @@ import mb.spoofax.gradle.util.getLanguageSpecification
 import mb.spoofax.gradle.util.lazyLoadCompiledLanguage
 import org.gradle.api.Plugin
 import org.gradle.api.Project
+import org.gradle.api.component.SoftwareComponentFactory
 import org.gradle.api.plugins.JavaLibraryPlugin
 import org.gradle.api.provider.ListProperty
 import org.gradle.api.provider.Property
@@ -30,6 +31,7 @@ import org.metaborg.core.language.LanguageIdentifier
 import org.metaborg.core.language.LanguageVersion
 import org.metaborg.spoofax.meta.core.config.StrategoFormat
 import java.io.File
+import javax.inject.Inject
 
 @Suppress("UnstableApiUsage")
 open class SpoofaxLangSpecExtension(project: Project) : SpoofaxExtensionBase(project) {
@@ -75,7 +77,9 @@ open class SpoofaxLangSpecExtension(project: Project) : SpoofaxExtensionBase(pro
 }
 
 @Suppress("unused", "UnstableApiUsage")
-class SpoofaxLanguageSpecificationPlugin : Plugin<Project> {
+class SpoofaxLanguageSpecificationPlugin @Inject constructor(
+    private val softwareComponentFactory: SoftwareComponentFactory,
+) : Plugin<Project> {
   override fun apply(project: Project) {
     project.pluginManager.apply(LifecycleBasePlugin::class)
     project.pluginManager.apply(SpoofaxBasePlugin::class)
@@ -159,6 +163,14 @@ class SpoofaxLanguageSpecificationPlugin : Plugin<Project> {
     languageIdentifier: LanguageIdentifier,
     archiveFile: File
   ): TaskProvider<SpoofaxArchiveLanguageSpecTask> {
+
+      // Create and register the spoofax-language component
+      val spoofaxLanguageComponent = softwareComponentFactory.adhoc("spoofaxLanguageComponent")
+      project.components.add(spoofaxLanguageComponent)
+      spoofaxLanguageComponent.addVariantsFromConfiguration(project.languageArchive) {
+          mapToMavenScope("runtime")
+      }
+
     val archiveTask = project.tasks.registerSpoofaxArchiveLanguageSpecTask()
     archiveTask.configureSafely {
       this.languageIdentifier.set(languageIdentifier)
